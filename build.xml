@@ -1,0 +1,85 @@
+<project name="cirrus" default="war" basedir=".">
+
+  <property name="version" value="1.0" />
+
+  <target name="init">
+    <mkdir dir="target/classes" />
+    <mkdir dir="target/test-classes" />
+    <mkdir dir="target/${ant.project.name}-${version}" />
+  </target>
+
+  <target name="compile" depends="init" description="compile">
+    <javac srcdir="src/main/java" destdir="target/classes"
+        debug="on" source="1.5" target="1.5" includeAntRuntime="false">
+      <classpath>
+        <fileset dir="lib" />
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="compile-test" depends="compile" description="compile test">
+    <javac srcdir="src/test/java" destdir="target/test-classes"
+        debug="on" source="1.5" target="1.5" includeAntRuntime="false">
+      <classpath>
+        <pathelement location="target/classes"/>
+        <fileset dir="lib" />
+      </classpath>
+    </javac>
+    <copy todir="target/test-classes">
+      <fileset dir="src/main/webapp"/>
+      <fileset dir="src/test/resources"/>
+      <fileset dir="src/test/webapp"/>
+    </copy>
+  </target>
+
+  <target name="test" depends="compile-test" description="test">
+    <taskdef name="jsunit" classname="com.joelhockey.jsunit.JSUnitTask">
+      <classpath>
+        <fileset dir="lib" />
+      </classpath>
+    </taskdef>
+    
+    <jsunit>
+      <classpath>
+        <fileset dir="lib" />
+      </classpath>
+      <batchtest>
+        <fileset dir="src/test/javascript">
+          <include name="**/*test*.js"/>
+        </fileset>
+      </batchtest>
+    </jsunit>
+    <mkdir dir="target/report/html" />
+    <junitreport todir="target/report">
+      <fileset dir="target/surefire-reports">
+        <include name="TEST-*.xml"/>
+      </fileset>
+      <report format="frames" todir="target/report/html"/>
+    </junitreport>
+  </target>
+  
+  <target name="war" depends="compile" description="war">
+    <copy todir="target/${ant.project.name}-${version}">
+      <fileset dir="src/main/webapp" />
+    </copy>
+    <copy todir="target/${ant.project.name}-${version}/WEB-INF/classes"> 
+      <fileset dir="target/classes" />
+    </copy>
+    <copy todir="target/${ant.project.name}-${version}/WEB-INF/lib"> 
+      <fileset dir="lib/runtime" />
+    </copy>
+    <jar jarfile="target/${ant.project.name}-${version}.war" basedir="target/${ant.project.name}-${version}" />
+  </target>
+
+  <target name="clean" description="clean">
+    <delete dir="target" />
+  </target>
+  
+  <target name="server" description="start web server" depends="compile">
+    <script language="javascript" src="src/script/server.js">
+      <classpath>
+        <fileset dir="lib" />
+      </classpath>
+    </script>
+  </target>
+</project>
