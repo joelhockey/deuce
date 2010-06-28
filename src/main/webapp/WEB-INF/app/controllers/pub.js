@@ -23,11 +23,11 @@
  */
 
 var pub = {
-    getLastModified: function(req) {
+    getLastModified: function (req) {
 	    return fileLastModified(this.getPublicPath(req));
 	},
 
-	get: function(req, res) {
+	get: function (req, res) {
 		try {
 			readFile(this.getPublicPath(req), res.getOutputStream());
 		} catch (e) {
@@ -36,7 +36,7 @@ var pub = {
 		}
     },
     
-    getPublicPath: function(req) {
+    getPublicPath: function (req) {
         var publicPath = req.getAttribute("com.joelhockey.cirrus.public_path");
         if (publicPath) { return publicPath; }
         var dirs = pathdirs;
@@ -51,5 +51,9 @@ var pub = {
         var publicPath = "/WEB-INF/public/" + dirs.join("/");
         req.setAttribute("com.joelhockey.cirrus.public_path", publicPath);
         return publicPath;
-    }
+    },
+    
+    index: function (req, res) {
+        jst();
+    },
 }

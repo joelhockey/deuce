@@ -71,10 +71,9 @@ public class CirrusServlet extends HttpServlet {
             CirrusScope scope = localScope.get();
             if (scope.load("/WEB-INF/app/cirrus.js")) {
                 NativeObject publicFiles = new NativeObject();
-                for (File dir : new File(getServletContext().getRealPath("/WEB-INF/public")).listFiles()) {
-                    if (dir.isDirectory()) {
-                        publicFiles.put(dir.getName(), scope, true);
-                    }
+                for (File f : new File(getServletContext().getRealPath("/WEB-INF/public")).listFiles()) {
+                    log.info("public: " + f.getName() + (f.isDirectory() ? " : dir" : " : file"));
+                    publicFiles.put(f.getName(), publicFiles, true);
                 }
                 scope.put("publicFiles", scope, publicFiles);
             }

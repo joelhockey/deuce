@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -82,11 +83,7 @@ public class CirrusScope extends ImporterTopLevel {
         super(cx);
         this.sconf = sconf;
         String[] names = {
-            "b64_s2b",
-            "b64_b2s",
             "fileLastModified",
-            "hex_s2b",
-            "hex_b2s",
             "jst",
             "load",
             "parseFile",
@@ -96,11 +93,6 @@ public class CirrusScope extends ImporterTopLevel {
         defineFunctionProperties(names, CirrusScope.class, ScriptableObject.DONTENUM);
         put("log", this, Context.javaToJS(log, this));
     }
-
-    public byte[] b64_s2b(String s) { return B64.s2b(s); }
-    public String b64_b2s(NativeJavaArray buf) { return B64.b2s((byte[]) buf.unwrap()); }
-    public byte[] hex_s2b(String s) { return Hex.s2b(s); }
-    public String hex_b2s(NativeJavaArray buf) { return Hex.b2s((byte[]) buf.unwrap()); }
 
     /**
      * Return last modified date of given file.  Caches results and stores for
@@ -205,9 +197,13 @@ public class CirrusScope extends ImporterTopLevel {
             throw new IOException("No path for file: " + path);
         }
         FileInputStream fis = new FileInputStream(rpath);
-        byte[] buf = new byte[4096];
-        for (int l = 0; (l = fis.read(buf)) != -1; ) {
-            outs.write(buf, 0, l);
+        try {
+            byte[] buf = new byte[4096];
+            for (int l = 0; (l = fis.read(buf)) != -1; ) {
+                outs.write(buf, 0, l);
+            }
+        } finally {
+            fis.close();
         }
     }
 
@@ -245,7 +241,19 @@ public class CirrusScope extends ImporterTopLevel {
         try {
             log.info("JST.parse(" + name + ".jst)");
             String source = (String) parse.call(cx, this, this, new Object[] {jstFile, name});
-            log.debug("compiled template " + name + ".jst:\n" + source);
+            File tempDir = (File) sconf.getServletContext().getAttribute("javax.servlet.context.tempdir");
+            if (tempDir != null) {
+                File jstDir = new File(tempDir, "jst");
+                jstDir.mkdir();
+                File compiledJstFile = new File(jstDir, name + ".js");
+                log.info("Writing compiled jst file to tmp file: " + compiledJstFile);
+                FileOutputStream fos = new FileOutputStream(compiledJstFile);
+                try {
+                    fos.write(source.getBytes());
+                } finally {
+                    fos.close();
+                }
+            }
             cx.evaluateString(this, source, "views/" + name + ".js", 1, null);
             ScriptableObject templates = (ScriptableObject) jstObj.get("templates", jstObj);
             Function f = (Function) templates.get(name, templates);

@@ -31,12 +31,12 @@ var JST = {
         
         var text = function() {
             if (textparts.length > 0) {
-                src.push('out.write("' + textparts.join('').replace(/\r?\n/g, '\\n\\\n').replace('"', '\\"') + '"); ');
+                src.push('out.write("' + textparts.join('').replace(/\r?\n/g, '\\n\\\n').replace(/"/g, '\\"') + '"); ');
                 textparts = [];
             }
         }
         var error = function(desc) {
-            throw new Error(desc + ", line: " + line + "." + linepos + ", tagstack: [" + tagstack + "]");
+            throw new Error(desc + ", line: " + line + "." + linepos + ", tagstack: [" + tagstack.join(" > ") + "]");
         }
 
         // skip blank lines at start

@@ -60,10 +60,11 @@ function cirrus(req, res) {
     }
     if (!controller || publicFiles[controller]) {
         // use pub controller for any public files
+        log.debug("using public controller for " + path);
         controller = "pub";
     }
 
-//    print("controller: " + controller + ", action: " + action + ", path: " + path)
+    log.debug("controller: " + controller + ", action: " + action + ", path: " + path);
     var ctlr = this[controller]
     if (load("/WEB-INF/app/controllers/" + controller + ".js")) {
     	ctlr = this[controller];
@@ -104,6 +105,7 @@ function cirrus(req, res) {
     // check controller for function matching 'action'
     var f = ctlr[action];
     if (f instanceof Function) {
+        log.debug("found action " + action + " in controller " + controller);
     	f.call(ctlr, req, res);
     	
     // else fall back on function from HTTP method
