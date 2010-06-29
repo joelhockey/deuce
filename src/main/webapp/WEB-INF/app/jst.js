@@ -26,6 +26,7 @@ var JST = {
             } else {
                 continue;
             }
+log.debug("groups: " + groups)
             body = body.substring(groups[0].length);
         }
         

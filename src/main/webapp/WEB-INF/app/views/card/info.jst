@@ -1,5 +1,17 @@
 {prototype default}
 {function body}
+<applet code="com.joelhockey.jspcsc.SmartcardApplet.class" 
+  archive="/applets/jspcsc-1.0.jar"
+  width="0" height="0" name="scard" id="scard">
+</applet>
 <h3>card info here</h3>
+<div id="0x00cf" />
+<script>
+var terms = scard.terminals().list(scard.CARD_PRESENT);
+if (terms.size() == 1) {
+    var sc = scard.getCard(terms[0]);
+    alert(sc);
+}
+</script>
 <img src="/images/tennis_ball.jpg" />
 {/function body}
