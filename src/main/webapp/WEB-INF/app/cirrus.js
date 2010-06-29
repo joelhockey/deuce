@@ -38,6 +38,24 @@ var ControllerPrototype = {
     }
 }
 
+var CONTROLLERS = {};
+
+function getController(controller) {
+    var ctlr = CONTROLLERS[controller];
+    try {
+        if (load("/WEB-INF/app/controllers/" + controller + ".js")) {
+            ctlr = CONTROLLERS[controller];
+            // copy ControllerPrototype functions
+            for (var f in ControllerPrototype) {
+                if (typeof ctlr[f] === "undefined") {
+                    ctlr[f] = ControllerPrototype[f];
+                }
+            }
+        }
+    } catch (e) { /* ignore */ }
+    return ctlr;
+}
+
 function cirrus(req, res) {
 	// variables injected by CirrusServlet:
 	// params - NativeObject with params
@@ -61,21 +79,11 @@ function cirrus(req, res) {
     if (!controller || publicFiles[controller]) {
         // use pub controller for any public files
         log.debug("using public controller for " + path);
-        controller = "pub";
+        controller = "public";
     }
 
     log.debug("controller: " + controller + ", action: " + action + ", path: " + path);
-    var ctlr = this[controller]
-    if (load("/WEB-INF/app/controllers/" + controller + ".js")) {
-    	ctlr = this[controller];
-    	// copy ControllerPrototype
-    	for (var f in ControllerPrototype) {
-    		if (typeof ctlr[f] == "undefined") {
-    			ctlr[f] = ControllerPrototype[f];
-    		}
-    	}
-    }
-
+    var ctlr = getController(controller);
     if (!ctlr) {
         log.warn("no controller defined for path: " + path);
     	res.setStatus(404);

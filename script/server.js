@@ -5,6 +5,8 @@ var jettydir = new java.io.File("jetty");
 for each (var file in jettydir.listFiles().concat(jettydir)) {
     addURL.invoke(java.lang.ClassLoader.getSystemClassLoader(), [file.toURL()]);
 }
+var tmpdir = new java.io.File(jettydir, "work");
+tmpdir.mkdir();
 print("Starting jetty on port 8080\nCtrl-C to exit");
 var server = new org.mortbay.jetty.Server();
 var connector=new org.mortbay.jetty.nio.SelectChannelConnector();
@@ -13,6 +15,7 @@ server.setConnectors([connector]);
 webapp = new org.mortbay.jetty.webapp.WebAppContext();
 webapp.setContextPath("/");
 webapp.setWar("./src/main/webapp");
+webapp.setTempDirectory(tmpdir);
 var classLoader = new org.mortbay.jetty.webapp.WebAppClassLoader(webapp);
 classLoader.addClassPath("target/classes");
 classLoader.addJars(org.mortbay.resource.Resource.newResource("lib/compile"));
@@ -22,12 +25,7 @@ server.setHandler(webapp);
 
 // logging
 var requestLogHandler = new org.mortbay.jetty.handler.RequestLogHandler();
-var requestLog = new org.mortbay.jetty.NCSARequestLog("logs/jetty-yyyy_mm_dd.request.log");
-requestLog.setRetainDays(90);
-requestLog.setAppend(true);
-requestLog.setExtended(false);
-requestLog.setLogTimeZone("GMT");
-requestLogHandler.setRequestLog(requestLog);
+requestLogHandler.setRequestLog(new org.mortbay.jetty.NCSARequestLog("logs/jetty-yyyy_mm_dd.request.log"));
 server.addHandler(requestLogHandler);
 
 server.start();

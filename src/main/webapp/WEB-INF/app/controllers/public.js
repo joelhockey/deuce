@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-var pub = {
+CONTROLLERS["public"] = {
     getLastModified: function (req) {
 	    return fileLastModified(this.getPublicPath(req));
 	},
@@ -56,4 +56,4 @@ var pub = {
     index: function (req, res) {
         jst();
     },
-}
+};
