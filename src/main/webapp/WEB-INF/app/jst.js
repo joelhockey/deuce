@@ -21,12 +21,11 @@ var JST = {
                 var type = body[0] == "$" ? "value" : body[1] == "/" ? "closetag" : "opentag";
                 var value = groups[1].replace(/^\s+|\s+$/g, ""); // trim space
                 toks.push({type: type, tok: groups[0], value: value, words: value.split(/\s+/)});
-            } else if ((groups = /^[^\r\n${]+/.exec(body)) != null || (groups = /^[^\r\n]+/) != null) { // text
+            } else if ((groups = /^[^\r\n${]+/.exec(body)) != null || (groups = /^[^\r\n]+/.exec(body)) != null) { // text
                 toks.push({type: "text", tok: groups[0], value: groups[0]});
             } else {
                 continue;
             }
-log.debug("groups: " + groups)
             body = body.substring(groups[0].length);
         }
         
