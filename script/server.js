@@ -28,5 +28,11 @@ var requestLogHandler = new org.mortbay.jetty.handler.RequestLogHandler();
 requestLogHandler.setRequestLog(new org.mortbay.jetty.NCSARequestLog("logs/jetty-yyyy_mm_dd.request.log"));
 server.addHandler(requestLogHandler);
 
+// jndi datasource
+var ds = new org.hsqldb.jdbc.jdbcDataSource();
+ds.setDatabase("jdbc:hsqldb:./hsqldb/deuce");
+ds.setUser("sa");
+var resource = new org.mortbay.jetty.plus.naming.Resource("jdbc/deuce", ds);
+
 server.start();
 server.join();

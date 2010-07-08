@@ -46,15 +46,11 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.JavaScriptException;
-import org.mozilla.javascript.NativeJavaArray;
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tools.shell.Global;
-
-import com.joelhockey.codec.B64;
-import com.joelhockey.codec.Hex;
 
 /**
  * Rhino scope for CirrusServlet.  Based on {@link Global}.

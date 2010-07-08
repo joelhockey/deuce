@@ -1,4 +1,4 @@
-<project name="cirrus" default="war" basedir=".">
+<project name="deuce" default="war" basedir=".">
 
   <property name="version" value="1.0" />
 

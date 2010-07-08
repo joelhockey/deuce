@@ -18,7 +18,7 @@ for (var i = 0; i < terms.size(); i++) {
     if (term.isCardPresent()) {
         try {
             var sc = scard.getSmartcard(term);
-            cf = sc.transmith('80ca9f7f00').toString();
+            cf = sc.transmith('80ca9f7f00');
             sc.disconnect(true);
         } catch (e) {
             cf = e;
