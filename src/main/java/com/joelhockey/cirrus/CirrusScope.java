@@ -60,8 +60,9 @@ import org.mozilla.javascript.tools.shell.Global;
  * @author Joel Hockey
  */
 public class CirrusScope extends ImporterTopLevel {
-	private static final Log log = LogFactory.getLog(CirrusScope.class);
-	private static final Log jsLog = LogFactory.getLog("com.joelhockey.cirrus.js");
+    private static final long serialVersionUID = 0xDC7C4EC5275394BL;
+    private static final Log log = LogFactory.getLog(CirrusScope.class);
+	private static final Log jslog = LogFactory.getLog("com.joelhockey.cirrus.js");
     public static final long RELOAD_WAIT = 3000;
     private ServletConfig sconf;
     private Map<String, CacheEntry> fileCache = new HashMap<String, CacheEntry>();
@@ -87,7 +88,8 @@ public class CirrusScope extends ImporterTopLevel {
             "readFile",
         };
         defineFunctionProperties(names, CirrusScope.class, ScriptableObject.DONTENUM);
-        put("log", this, Context.javaToJS(log, this));
+        put("log", this, Context.javaToJS(jslog, this));
+        put("sconf", this, Context.javaToJS(sconf, this));
     }
 
     /**
@@ -139,25 +141,24 @@ public class CirrusScope extends ImporterTopLevel {
 
     /**
      * Parse file and put into local cache.
-      * @param path URL path will be converted to real path
+     * @param fullpath full path to file
      * @return true if file was (re)loaded, false if no change
      * @throws IOException if error reading file
      */
-    public boolean parseFile(String path) throws IOException {
-        log.info("parsing file: " + path);
-        // check cache again inside synchronized method
-        CacheEntry entry = fileCache.get(path);
-        if (entry != null && new File(path).lastModified() == entry.lastModified) {
-            log.debug("file already parsed: " + path);
+    public boolean parseFile(String fullpath) throws IOException {
+        log.info("parsing file: " + fullpath);
+        CacheEntry entry = fileCache.get(fullpath);
+        if (entry != null && new File(fullpath).lastModified() == entry.lastModified) {
+            log.debug("file already parsed: " + fullpath);
             return false;
         }
-        File file = new File(path);
+        File file = new File(fullpath);
         Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
         Context cx = Context.enter();
         try {
-            Object obj = cx.evaluateReader(this, reader, path, 1, null);
+            Object obj = cx.evaluateReader(this, reader, fullpath, 1, null);
             reader.close();
-            fileCache.put(path, new CacheEntry(path, file.lastModified(), System.currentTimeMillis(), obj));
+            fileCache.put(fullpath, new CacheEntry(fullpath, file.lastModified(), System.currentTimeMillis(), obj));
             return true;
         } finally {
             Context.exit();
@@ -170,14 +171,9 @@ public class CirrusScope extends ImporterTopLevel {
             return readFile(path);
         } else {
             log.info("readFile(stream): " + path);
-            Context cx = Context.enter();
-            try {
-                OutputStream outs = (OutputStream) cx.jsToJava(objOuts, OutputStream.class);
-                readFileIntoStream(path, outs);
-                return null;
-            } finally {
-                cx.exit();
-            }
+            OutputStream outs = (OutputStream) Context.jsToJava(objOuts, OutputStream.class);
+            readFileIntoStream(path, outs);
+            return null;
         }
     }
 

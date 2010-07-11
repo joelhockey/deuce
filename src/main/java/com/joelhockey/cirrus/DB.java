@@ -74,31 +74,31 @@ public class DB {
      * @throws SQLException if sql error
      */
     private static int update(Connection dbconn, String sql, String sqlcmd, Object... params) throws SQLException {
-       long start = System.currentTimeMillis();
-       boolean ok = false;
-       int count = -1;
-       PreparedStatement stmt = null;
+        long start = System.currentTimeMillis();
+        boolean ok = false;
+        int count = -1;
+        PreparedStatement stmt = null;
 
-       try {
-           stmt = dbconn.prepareStatement(sql);
-           setParams(stmt, params);
+        try {
+            stmt = dbconn.prepareStatement(sql);
+            setParams(stmt, params);
 
-           count = stmt.executeUpdate();
-           ok = true;
-           return count;
-       } finally {
-           long end = System.currentTimeMillis();
-           log.debug(String.format("sql: %s : %s : %d : %05d : %s : %s : %d", sqlcmd, ok ? "ok" : "error", count, (end - start),
-                   sql, Arrays.toString(params), count));
-           if (stmt != null) {
-               try {
-                   stmt.close();
-               } catch (Exception e) {
-                   log.error("Error closing stmt", e);
-               }
-           }
-       }
-   }
+            count = stmt.executeUpdate();
+            ok = true;
+            return count;
+        } finally {
+            long end = System.currentTimeMillis();
+            log.debug(String.format("sql: %s : %s : %d : %05d : %s : %s : %d", sqlcmd, ok ? "ok" : "error", count, (end - start),
+                    sql, Arrays.toString(params), count));
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (Exception e) {
+                    log.error("Error closing stmt", e);
+                }
+            }
+        }
+    }
 
     /**
      * delete.
@@ -143,20 +143,20 @@ public class DB {
      * @throws SQLException if sql error
      */
     public static StatementResultSet select(Connection dbconn, String sql, Object... params) throws SQLException {
-       long start = System.currentTimeMillis();
-       boolean ok = false;
-       try {
-           PreparedStatement stmt = dbconn.prepareStatement(sql);
-           setParams(stmt, params);
-           ResultSet rs = stmt.executeQuery();
-           ok = true;
-           return new StatementResultSet(stmt, rs);
-       } finally {
-           long end = System.currentTimeMillis();
-           log.debug(String.format("sql: select : %s : %05d : %s : %s", ok ? "ok" : "error",
-                   (end - start), sql, Arrays.toString(params)));
-       }
-   }
+        long start = System.currentTimeMillis();
+        boolean ok = false;
+        try {
+            PreparedStatement stmt = dbconn.prepareStatement(sql);
+            setParams(stmt, params);
+            ResultSet rs = stmt.executeQuery();
+            ok = true;
+            return new StatementResultSet(stmt, rs);
+        } finally {
+            long end = System.currentTimeMillis();
+            log.debug(String.format("sql: select : %s : %05d : %s : %s", ok ? "ok" : "error", (end - start), sql, Arrays
+                    .toString(params)));
+        }
+    }
 
     /**
      * select int.
@@ -178,22 +178,23 @@ public class DB {
      * @throws SQLException if sql error
      */
     public static int selectInt(Connection dbconn, String sql, Object... params) throws SQLException {
-       StatementResultSet stmtRs = select(dbconn, sql, params);
-       try {
-           if (!stmtRs.getResultSet().next()) {
-               throw new SQLException(String.format("No records found for sql: %s, %s", sql, Arrays.toString(params)));
-           }
-           int result = stmtRs.getResultSet().getInt(1);
-           try {
-               if (stmtRs.getResultSet().next()) {
-                   log.warn(String.format("More than 1 object returned for sql: %s , %s", sql, Arrays.toString(params)));
-               }
-           } catch (Throwable t) {} // ignore
-           return result;
-       } finally {
-           stmtRs.getStatement().close();
-       }
-   }
+        StatementResultSet stmtRs = select(dbconn, sql, params);
+        try {
+            if (!stmtRs.getResultSet().next()) {
+                throw new SQLException(String.format("No records found for sql: %s, %s", sql, Arrays.toString(params)));
+            }
+            int result = stmtRs.getResultSet().getInt(1);
+            try {
+                if (stmtRs.getResultSet().next()) {
+                    log.warn(String.format("More than 1 object returned for sql: %s , %s", sql, Arrays.toString(params)));
+                }
+            } catch (Throwable t) {
+            } // ignore
+            return result;
+        } finally {
+            stmtRs.getStatement().close();
+        }
+    }
 
     /**
      * select string.
@@ -215,22 +216,23 @@ public class DB {
      * @throws SQLException if sql error
      */
     public static String selectStr(Connection dbconn, String sql, Object... params) throws SQLException {
-       StatementResultSet stmtRs = select(dbconn, sql, params);
-       try {
-           if (!stmtRs.getResultSet().next()) {
-               throw new SQLException(String.format("No records found for sql: %s, %s", sql, Arrays.toString(params)));
-           }
-           String result = stmtRs.getResultSet().getString(1);
-           try {
-               if (stmtRs.getResultSet().next()) {
-                   log.warn(String.format("More than 1 object returned for sql: %s , %s", sql, Arrays.toString(params)));
-               }
-           } catch (Throwable t) {} // ignore
-           return result;
-       } finally {
-           stmtRs.getStatement().close();
-       }
-   }
+        StatementResultSet stmtRs = select(dbconn, sql, params);
+        try {
+            if (!stmtRs.getResultSet().next()) {
+                throw new SQLException(String.format("No records found for sql: %s, %s", sql, Arrays.toString(params)));
+            }
+            String result = stmtRs.getResultSet().getString(1);
+            try {
+                if (stmtRs.getResultSet().next()) {
+                    log.warn(String.format("More than 1 object returned for sql: %s , %s", sql, Arrays.toString(params)));
+                }
+            } catch (Throwable t) {
+            } // ignore
+            return result;
+        } finally {
+            stmtRs.getStatement().close();
+        }
+    }
 
     /**
      * Set params on PreparedStatement. Uses reflection to determine param type and call appropriate setter on
@@ -240,32 +242,32 @@ public class DB {
      * @throws SQLException if sql error
      */
     public static void setParams(PreparedStatement stmt, Object... params) throws SQLException {
-       if (params == null || params.length == 0) {
-           return;
-       }
+        if (params == null || params.length == 0) {
+            return;
+        }
 
-       for (int i = 0; i < params.length; i++) {
-           Object p = params[i];
-           if (p == null) {
-               // assume VARCHAR for null
-               stmt.setNull(i + 1, Types.VARCHAR);
-           } else if (p instanceof String) {
-               stmt.setString(i + 1, (String) p);
-           } else if (p instanceof Integer) {
-               stmt.setInt(i + 1, (Integer) p);
-           } else if (p instanceof Double) {
-               stmt.setDouble(i + 1, (Double) p);
-           } else if (p instanceof Date) {
-               stmt.setTimestamp(i + 1, new java.sql.Timestamp(((Date) p).getTime()));
-           } else if (p instanceof Throwable) {
-               StringWriter sw = new StringWriter();
-               ((Throwable) p).printStackTrace(new PrintWriter(sw));
-               stmt.setString(i + 1, sw.toString());
-           } else {
-               throw new SQLException("unknown type in sql param class: " + p.getClass() + " : p: " + p);
-           }
-       }
-   }
+        for (int i = 0; i < params.length; i++) {
+            Object p = params[i];
+            if (p == null) {
+                // assume VARCHAR for null
+                stmt.setNull(i + 1, Types.VARCHAR);
+            } else if (p instanceof String) {
+                stmt.setString(i + 1, (String) p);
+            } else if (p instanceof Integer) {
+                stmt.setInt(i + 1, (Integer) p);
+            } else if (p instanceof Double) {
+                stmt.setDouble(i + 1, (Double) p);
+            } else if (p instanceof Date) {
+                stmt.setTimestamp(i + 1, new java.sql.Timestamp(((Date) p).getTime()));
+            } else if (p instanceof Throwable) {
+                StringWriter sw = new StringWriter();
+                ((Throwable) p).printStackTrace(new PrintWriter(sw));
+                stmt.setString(i + 1, sw.toString());
+            } else {
+                throw new SQLException("unknown type in sql param class: " + p.getClass() + " : p: " + p);
+            }
+        }
+    }
 
     /**
      * Helper to get clob from result set.
