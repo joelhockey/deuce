@@ -1,8 +1,11 @@
 CREATE SCHEMA PUBLIC AUTHORIZATION DBA
-CREATE MEMORY TABLE USER(NAME VARCHAR,LOGONS INTEGER)
+CREATE MEMORY TABLE DB_VERSION(VERSION INTEGER NOT NULL,CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,FILENAME VARCHAR,SCRIPT VARCHAR,CONSTRAINT UNQ_DB_VERSION_VERSION UNIQUE(VERSION))
 CREATE MEMORY TABLE DUAL(DUMMY VARCHAR(1))
+CREATE MEMORY TABLE USER(NAME VARCHAR,LOGONS INTEGER)
 CREATE USER SA PASSWORD ""
 GRANT DBA TO SA
 SET WRITE_DELAY 10
 SET SCHEMA PUBLIC
+INSERT INTO DB_VERSION VALUES(0,'2010-07-12 19:10:35.765000000','000_init.sql','-- 0 init\u000d\u000acreate table db_version (\u000d\u000a    version integer not null,\u000d\u000a    created_at timestamp default current_timestamp,\u000d\u000a    filename varchar,\u000d\u000a    script varchar\u000d\u000a);\u000d\u000aalter table db_version add constraint unq_db_version_version unique (version);\u000d\u000a\u000d\u000acreate table dual(dummy varchar(1));\u000d\u000ainsert into dual(dummy) values (''X'');\u000d\u000a')
+INSERT INTO DB_VERSION VALUES(1,'2010-07-12 19:10:35.812000000','001_create.sql','create table user(\u000d\u000a    name varchar,\u000d\u000a    logons integer\u000d\u000a);\u000d\u000a')
 INSERT INTO DUAL VALUES('X')

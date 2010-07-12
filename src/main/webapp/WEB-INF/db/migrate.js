@@ -20,26 +20,26 @@
             dbversion = DB.selectInt(dbconn, "select max(version) from db_version");
         } catch (e) {
             // error reading from 'db_version' table, try init script
-            log("Error getting db version, will try and load init script", e);
+            log.warn("Error getting db version, will try and load init script: " + e);
             var stmt = dbconn.createStatement();
             var sql = readFile("/WEB-INF/db/000_init.sql");
-            DB.insert("insert into db_version (version, created_at, desc, script) values (0, systimestamp, '000_init.sql', ?)", [sql]);
             stmt.execute(sql);
             stmt.close();
+            DB.insert(dbconn, "insert into db_version (version, filename, script) values (0, '000_init.sql', ?)", [sql]);
             dbversion = DB.selectInt(dbconn, "select max(version) from db_version");
         }
         
         // check if up to date
+        var msg = "db at version: " + dbversion + ", app requires version: " + version;
         if (dbversion === version) {
-            log("already at expected version: " + version);
+            log.info("db version ok.  " + msg);
             return;
-        } else if (dbversion > version) {
-            // very strange
-            throw new java.sql.SQLException("require version " + version + ", but db at: " + dbversion);
+        } else if (dbversion > version) { // very strange
+            throw new java.sql.SQLException(msg);
         }
         
         // move from dbversion to version
-        log("doing db migration, current version: " + dbversion + ", app requires: " + version);
+        log.info("doing db migration.  " + msg);
         
         // look in dir /WEB-INF/db to find required files
         var dbpath = sconf.getServletContext().getRealPath("/WEB-INF/db");
@@ -77,9 +77,9 @@
         // run scripts
         var stmt = dbconn.createStatement();
         for (var i = dbversion + 1; i <= version; i++) {
-            log("running script: " + fileMap[i]);
-            DB.insert("insert into db_version (version, created_at, desc, script) values (?, systimestamp, ?, ?)", [i, fileMap[i], sql]);
+            log.info("db migration running script: " + fileMap[i]);
             var sql = readFile("/WEB-INF/db/" + fileMap[i]);
+            DB.insert(dbconn, "insert into db_version (version, filename, script) values (?, ?, ?)", [i, fileMap[i], sql]);
             stmt.execute(sql);
         }
         stmt.close();

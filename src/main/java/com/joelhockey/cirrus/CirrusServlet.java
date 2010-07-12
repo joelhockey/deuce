@@ -71,6 +71,7 @@ public class CirrusServlet extends HttpServlet {
             CirrusScope scope = localScope.get();
             scope.load("/WEB-INF/db/migrate.js");
         } catch (Exception e) {
+            log.error("Error migrating db", e);
             throw new ServletException("Error migrating db", e);
         }
     }

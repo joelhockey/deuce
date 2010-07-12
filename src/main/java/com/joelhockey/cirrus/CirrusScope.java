@@ -50,6 +50,7 @@ import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -166,7 +167,7 @@ public class CirrusScope extends ImporterTopLevel {
     }
 
     public String readFile(String path, Object objOuts) throws IOException {
-        if (objOuts == null) {
+        if (objOuts == null || objOuts instanceof Undefined) {
             log.info("readFile: " + path);
             return readFile(path);
         } else {
@@ -251,7 +252,9 @@ public class CirrusScope extends ImporterTopLevel {
             Function f = (Function) templates.get(name, templates);
             return (NativeObject) f.construct(cx, this, null);
         } catch (JavaScriptException jse) {
-        	throw new IOException("Error loading views/" + name + ".js: " + jse.getMessage(), jse);
+        	IOException ioe = new IOException("Error loading views/" + name + ".js: " + jse.getMessage());
+        	ioe.initCause(jse);
+        	throw ioe;
         } finally {
             Context.exit();
         }
