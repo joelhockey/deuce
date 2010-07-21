@@ -39,6 +39,7 @@ var ControllerPrototype = {
 }
 
 var CONTROLLERS = {};
+var LIB = {};
 
 function getController(controller) {
     var ctlr = CONTROLLERS[controller];
@@ -56,21 +57,15 @@ function getController(controller) {
     return ctlr;
 }
 
-var ic = new javax.naming.InitialContext();
-var DATASOURCE = ic.lookup("jdbc/deuce");
+var DATASOURCE = new javax.naming.InitialContext().lookup("jdbc/deuce");
 var DB = com.joelhockey.cirrus.DB;
-var dbconn = DATASOURCE.getConnection();
-var stmtrs = DB.select(dbconn, "select * from user where name = ? or name = ? and logons > ?", ["alice", null, 3]);
-stmtrs.close();
-print("dual size: " + DB.selectInt(dbconn, "select count(*) from dual"));
-print("user size: " + DB.selectInt(dbconn, "select count(*) from user where name = ?", ["x"]));
 
 function cirrus(req, res) {
 	// variables injected by CirrusServlet:
-	// params - NativeObject with params
-	// publicFiles - NativeObject with public directories
-	// path - String
-	// method - String
+	// * params - NativeObject with params
+	// * publicFiles - NativeObject with public directories
+	// * path - String
+	// * method - String
 
 	// put variables 'action', 'pathdirs', 'controller', in global scope
 	// to allow access from template

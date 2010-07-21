@@ -15,6 +15,8 @@ import java.util.Date;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.joelhockey.codec.Hex;
+
 public class DB {
     private static final Log log = LogFactory.getLog(DB.class);
 
@@ -259,6 +261,8 @@ public class DB {
                 stmt.setDouble(i + 1, (Double) p);
             } else if (p instanceof Date) {
                 stmt.setTimestamp(i + 1, new java.sql.Timestamp(((Date) p).getTime()));
+            } else if (p instanceof byte[]) {
+                stmt.setString(i + 1, Hex.b2s((byte[]) p));
             } else if (p instanceof Throwable) {
                 StringWriter sw = new StringWriter();
                 ((Throwable) p).printStackTrace(new PrintWriter(sw));

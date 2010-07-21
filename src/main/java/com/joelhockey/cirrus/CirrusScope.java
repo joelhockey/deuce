@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -86,6 +87,7 @@ public class CirrusScope extends ImporterTopLevel {
             "load",
             "parseFile",
             "print",
+            "printf",
             "readFile",
         };
         defineFunctionProperties(names, CirrusScope.class, ScriptableObject.DONTENUM);
@@ -216,6 +218,20 @@ public class CirrusScope extends ImporterTopLevel {
             sb.append(Context.toString(args[i]));
         }
         log.info(sb);
+    }
+
+    /**
+     * printf.
+     * @param cx javascript context - ignored
+     * @param thisObj scope - ignored
+     * @param args first value is printf format string, other args get substituted
+     * @param funObj function - ignored
+     * @return printf result
+     */
+    public static String printf(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+        Object[] formatArgs = new Object[args.length - 1];
+        System.arraycopy(args, 1, formatArgs, 0, formatArgs.length);
+        return String.format(args[0].toString(), formatArgs);
     }
 
     private NativeObject loadjst(String name) throws IOException {

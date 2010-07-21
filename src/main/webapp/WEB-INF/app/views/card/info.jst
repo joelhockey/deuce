@@ -2,7 +2,7 @@
 {function body}
 <h3>card info</h3>
 <table id="terminalTable" cellpadding="3" cellspacing="0" border="1">
-<tr><th>Smartcard Terminals</th><th>Card Present</th><th>cplc</th></tr>
+<tr><th>Smartcard Terminals</th><th>Card Present</th><th>cplc</th><th>&nbsp;</th></tr>
 </table>
 <applet code="com.joelhockey.jspcsc.SmartcardApplet.class" 
   archive="/applets/jspcsc-1.0-jar-with-dependencies.jar"
@@ -14,17 +14,19 @@ var scard = document.getElementById('SmartcardApplet');
 var terms = scard.terminals().list(scard.ALL);
 for (var i = 0; i < terms.size(); i++) {
     var term = terms.get(i);
-    var cf = '';
+    var cplc = '';
     if (term.isCardPresent()) {
         try {
             var sc = scard.getSmartcard(term);
-            cf = sc.transmith('80ca9f7f00');
+            cplc = sc.transmith('80ca9f7f00');
             sc.disconnect(true);
         } catch (e) {
-            cf = e;
+            cplc = e;
         }
     }
-    $('#terminalTable tr:last').after('<tr><td>' + term.getName() + '</td><td>' + term.isCardPresent() + '</td><td>' + cf + '</td></tr>');
+    $('#terminalTable tr:last').after(
+        '<tr><td>' + term.getName() + '</td><td>' + term.isCardPresent() +
+        '</td><td>' + cplc + '</td><td><a href="" onclick="apdu(' + term.getName() + ');">update</a></td></tr>');
 }
 </script>
 <img src="/images/tennis_ball.jpg" />

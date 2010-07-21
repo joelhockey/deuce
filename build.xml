@@ -28,7 +28,7 @@
     <copy todir="target/test-classes">
       <fileset dir="src/main/webapp"/>
       <fileset dir="src/test/resources"/>
-      <fileset dir="src/test/webapp"/>
+      <fileset dir="src/test/javascript"/>
     </copy>
   </target>
 
@@ -41,6 +41,8 @@
     
     <jsunit>
       <classpath>
+        <pathelement location="target/test-classes"/>
+        <pathelement location="target/classes"/>
         <fileset dir="lib" />
       </classpath>
       <batchtest>

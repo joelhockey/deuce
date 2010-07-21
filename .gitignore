@@ -1,6 +1,8 @@
 .classpath
 .project
 .settings
+hsqldb/deuce.log
+hsqldb/deuce.script
 jetty/work
 logs
 target
