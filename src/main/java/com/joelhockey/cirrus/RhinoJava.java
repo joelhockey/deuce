@@ -29,7 +29,6 @@ package com.joelhockey.cirrus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +36,7 @@ import java.util.Map;
 
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeJavaArray;
+import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -48,65 +48,65 @@ import org.mozilla.javascript.ScriptableObject;
  */
 
 public class RhinoJava {
-    public static Object wrapNative(ScriptableObject scope, Object obj) {
+    public static Object java2rhino(Object obj) {
+System.out.println("java2rhino " + obj.getClass() + " : " + obj);
         if (obj instanceof String) {
             return obj;
         } else if (obj instanceof Map) {
-            return wrapMap(scope, (Map) obj);
+            return java2rhinoMap((Map) obj);
         } else if (obj instanceof List) {
-            return wrapArray(scope, (List) obj);
+            return java2rhinoArray((List) obj);
         } else if (obj instanceof byte[] || obj instanceof char[] ||  obj instanceof short[] || obj instanceof int[] || obj instanceof long[]) {
-            return new NativeJavaArray(scope, obj);
+            return new NativeJavaArray(null, obj);
         } else if (obj instanceof Object[]) {
-            return wrapArray(scope, Arrays.asList(obj));
+            return java2rhinoArray(Arrays.asList(obj));
         }
         return obj;
     }
 
-    public static NativeObject wrapMap(ScriptableObject scope, Map map) {
+    public static NativeObject java2rhinoMap(Map map) {
         NativeObject no = new NativeObject();
         for (Iterator it = map.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry) it.next();
-            no.defineProperty(entry.getKey().toString(), wrapNative(scope, entry.getValue()), ScriptableObject.EMPTY);
+            no.defineProperty(entry.getKey().toString(), java2rhino(entry.getValue()), ScriptableObject.EMPTY);
         }
         return no;
     }
 
-    public static NativeArray wrapArray(ScriptableObject scope, List list) {
+    public static NativeArray java2rhinoArray(List list) {
         NativeArray na = new NativeArray(list.size());
         for (int i = 0; i < list.size(); i++) {
-            na.put(i, scope, wrapNative(scope, list.get(i)));
+            na.put(i, na, java2rhino(list.get(i)));
         }
         return na;
     }
 
-    public static List unwrapNativeArray(final NativeArray na) {
-        return new ArrayList() {{
-            for (int i = 0; i < na.getLength(); ++i) {
-                add(unwrapNative(na.get(i, null)));
-            }
-        }};
-    }
-
-    public static Map<String, Object> unwrapObject (final ScriptableObject sObj) {
-        return new LinkedHashMap<String, Object> () {{
-            for (int i = 0; i < sObj.getAllIds().length; i++) {
-                put(sObj.getAllIds()[i].toString(), unwrapNative(sObj.get(sObj.getAllIds()[i].toString(), null)));
-            }
-        }};
-    }
-
-    public static Object unwrapNative (final Object obj) {
-        if (obj instanceof NativeString || obj instanceof String) {
-            return obj.toString();
-        } else if (obj instanceof NativeArray) {
-            return unwrapNativeArray((NativeArray) obj);
-        } else if (obj instanceof NativeJavaArray) {
-            return ((NativeJavaArray) obj).unwrap();
-        } else if (obj instanceof ScriptableObject) {
-            return unwrapObject((ScriptableObject) obj);
+    public static Object rhino2java(final Object obj) {
+System.out.println("rhino2java: " + (obj != null ? obj.getClass() : "null") + " : " + obj);
+        if (obj instanceof NativeArray) {
+            return rhino2javaNativeArray((NativeArray) obj);
+        } else if (obj instanceof NativeObject) {
+            return rhino2javaNativeObject((NativeObject) obj);
+        } else if (obj instanceof NativeJavaObject) {
+            return ((NativeJavaObject) obj).unwrap();
         } else {
             return obj;
         }
+    }
+
+    public static List rhino2javaNativeArray(final NativeArray na) {
+        return new ArrayList() {{
+            for (int i = 0; i < na.getLength(); ++i) {
+                add(rhino2java(na.get(i, null)));
+            }
+        }};
+    }
+
+    public static Map rhino2javaNativeObject (final NativeObject sObj) {
+        return new LinkedHashMap() {{
+            for (int i = 0; i < sObj.getAllIds().length; i++) {
+                put(sObj.getAllIds()[i].toString(), rhino2java(sObj.get(sObj.getAllIds()[i].toString(), null)));
+            }
+        }};
     }
 }
