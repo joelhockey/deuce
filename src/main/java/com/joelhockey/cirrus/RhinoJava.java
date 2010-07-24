@@ -38,6 +38,7 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeJavaArray;
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
@@ -48,41 +49,42 @@ import org.mozilla.javascript.ScriptableObject;
  */
 
 public class RhinoJava {
-    public static Object java2rhino(Object obj) {
-System.out.println("java2rhino " + obj.getClass() + " : " + obj);
+    public static Object java2rhino(Scriptable scope, Object obj) {
         if (obj instanceof String) {
             return obj;
         } else if (obj instanceof Map) {
-            return java2rhinoMap((Map) obj);
+            return java2rhinoMap(scope, (Map) obj);
         } else if (obj instanceof List) {
-            return java2rhinoArray((List) obj);
+            return java2rhinoArray(scope, (List) obj);
         } else if (obj instanceof byte[] || obj instanceof char[] ||  obj instanceof short[] || obj instanceof int[] || obj instanceof long[]) {
             return new NativeJavaArray(null, obj);
         } else if (obj instanceof Object[]) {
-            return java2rhinoArray(Arrays.asList(obj));
+            return java2rhinoArray(scope, Arrays.asList(obj));
         }
         return obj;
     }
 
-    public static NativeObject java2rhinoMap(Map map) {
+    public static NativeObject java2rhinoMap(Scriptable scope, Map map) {
         NativeObject no = new NativeObject();
+        if (scope != null) {
+            no.setPrototype(ScriptableObject.getObjectPrototype(scope));
+        }
         for (Iterator it = map.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry) it.next();
-            no.defineProperty(entry.getKey().toString(), java2rhino(entry.getValue()), ScriptableObject.EMPTY);
+            no.defineProperty(entry.getKey().toString(), java2rhino(scope, entry.getValue()), ScriptableObject.EMPTY);
         }
         return no;
     }
 
-    public static NativeArray java2rhinoArray(List list) {
+    public static NativeArray java2rhinoArray(Scriptable scope, List list) {
         NativeArray na = new NativeArray(list.size());
         for (int i = 0; i < list.size(); i++) {
-            na.put(i, na, java2rhino(list.get(i)));
+            na.put(i, na, java2rhino(scope, list.get(i)));
         }
         return na;
     }
 
     public static Object rhino2java(final Object obj) {
-System.out.println("rhino2java: " + (obj != null ? obj.getClass() : "null") + " : " + obj);
         if (obj instanceof NativeArray) {
             return rhino2javaNativeArray((NativeArray) obj);
         } else if (obj instanceof NativeObject) {

@@ -1,15 +1,6 @@
-JSON = {
-    stringify: function(obj) {
-        return com.joelhockey.codec.JSON.stringify(com.joelhockey.cirrus.RhinoJava.rhino2java(obj));
-    },
-    parse: function(s) {
-        return com.joelhockey.cirrus.RhinoJava.java2rhino(com.joelhockey.codec.JSON.parse(s));
-    }        
-};
+load("setup.js");
 
-//function test() {
-    var json = JSON.stringify({a: {b: [1, null]}});
-    print(json);
+function test() {
+    var json = JSON.stringify({a: "a", b: {c: [1, null]}});
     var o = JSON.parse(json);
-    print(o.a)
-//}
+}

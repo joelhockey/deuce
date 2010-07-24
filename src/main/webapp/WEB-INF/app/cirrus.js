@@ -22,50 +22,54 @@
  * THE SOFTWARE.
  */
 
-var ControllerPrototype = {
-	getLastModified : function(req) { return -1; },
-    before : function(req, res) { return true; },
-    after : function(req, res) {},
-    options : function(req, res) {
-		res.addHeader("Allow", [m.toUpperCase() for each (m in "options,get,head,post,put,delete,trace".split(",")) if (this[m])].join(", "));
-    },
-    trace : function(req, res) {
-    	var body = "TRACE " + req.getRequestURI() + " " + req.getProtocol() + "\r\n" +
-		    [key + ": " + params[key] for each (key in params)].join("\r\n")
-    	res.setContentType("message/http");
-        resp.setContentLength(body.length);
-    	res.getWriter().write(body);
-    }
-}
-
+// GLOBAL objects
 var CONTROLLERS = {};
-var LIB = {};
-
-function getController(controller) {
-    var ctlr = CONTROLLERS[controller];
-    try {
-        if (load("/WEB-INF/app/controllers/" + controller + ".js")) {
-            ctlr = CONTROLLERS[controller];
-            // copy ControllerPrototype functions
-            for (var f in ControllerPrototype) {
-                if (typeof ctlr[f] === "undefined") {
-                    ctlr[f] = ControllerPrototype[f];
-                }
-            }
-        }
-    } catch (e) { /* ignore */ }
-    return ctlr;
-}
-
 var DATASOURCE = new javax.naming.InitialContext().lookup("jdbc/deuce");
 var DB = com.joelhockey.cirrus.DB;
+var JSON = new com.joelhockey.cirrus.JSON(global());
+var LIB = {};
 
+// variables already injected into global namespace by CirrusServlet:
+// * params - NativeObject with params
+// * publicFiles - NativeObject with public directories
+// * path - String
+// * method - String
+// This method adds strings: pathdirs, controller, action
 function cirrus(req, res) {
-	// variables injected by CirrusServlet:
-	// * params - NativeObject with params
-	// * publicFiles - NativeObject with public directories
-	// * path - String
-	// * method - String
+    // private object - prototype for all controllers
+    var ControllerPrototype = {
+        getLastModified : function(req) { return -1; },
+        before : function(req, res) { return true; },
+        after : function(req, res) {},
+        options : function(req, res) {
+            res.addHeader("Allow", [m.toUpperCase() for each (m in "options,get,head,post,put,delete,trace".split(",")) if (this[m])].join(", "));
+        },
+        trace : function(req, res) {
+            var body = "TRACE " + req.getRequestURI() + " " + req.getProtocol() + "\r\n" +
+                [key + ": " + params[key] for each (key in params)].join("\r\n")
+            res.setContentType("message/http");
+            resp.setContentLength(body.length);
+            res.getWriter().write(body);
+        }
+    };
+
+    // private helper function
+    var getController = function (controller) {
+        var ctlr = CONTROLLERS[controller];
+        try {
+            if (load("/WEB-INF/app/controllers/" + controller + ".js")) {
+                ctlr = CONTROLLERS[controller];
+                // copy ControllerPrototype functions
+                for (var f in ControllerPrototype) {
+                    if (typeof ctlr[f] === "undefined") {
+                        ctlr[f] = ControllerPrototype[f];
+                    }
+                }
+            }
+        } catch (e) { /* ignore */ }
+        return ctlr;
+    };
+
 
 	// put variables 'action', 'pathdirs', 'controller', in global scope
 	// to allow access from template

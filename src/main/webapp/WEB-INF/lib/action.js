@@ -24,12 +24,17 @@ LIB.action = {
         try {
             var hostChallenge = com.joelhockey.codec.Buf.substring(null, 0, 8);
             new java.security.SecureRandom().nextBytes(hostChallenge);
-            var count = DB.insert("insert into gp_session (session_id, last_accessed_at, iin, cin, csn, status, host_challenge) values (?, ?, ?, ?, ?, '02_initupdate', ?) where not exists (select id from gp_session where session_id=?)",
+            var count = DB.insert(dbconn,
+"insert into gp_session (session_id, last_accessed_at, iin, cin, csn, status, host_challenge) \
+  ( select ?, ?, ?, ?, ?, '02_initupdate', ? from dual where not exists \
+    ( select null from gp_session where session_id=? ) \
+  )",
                     [id, new java.util.Date(), data.iin, data.cin, data.csn, hostChallenge, id]);
             if (count === 0) {
                 return {msgtype: "error", error: "session already started for id: " + id};
             }
         } catch (e) {
+            log.error("Error in startActions", e.javaException || e.rhinoException || null);
             return {msgtype: "error", error: "could not start actions: " + e};
         } finally {
             dbconn.close();
