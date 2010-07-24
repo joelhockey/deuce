@@ -30,9 +30,9 @@ import org.mozilla.javascript.Scriptable;
  * @author Joel Hockey
  */
 
-public class JSON {
+public class RhinoJSON {
     private Scriptable scope;
-    public JSON(Scriptable scope) {
+    public RhinoJSON(Scriptable scope) {
         this.scope = scope;
     }
 

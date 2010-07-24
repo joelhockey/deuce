@@ -1,6 +1,6 @@
 // set some global objects
 var DB = com.joelhockey.cirrus.DB;
-var JSON = new com.joelhockey.cirrus.JSON(global());
+var JSON = new com.joelhockey.cirrus.RhinoJSON(global());
 var log = org.apache.commons.logging.LogFactory.getLog("com.joelhockey.cirrus.js");
 
 // use anonymous function to keep global namespace clean

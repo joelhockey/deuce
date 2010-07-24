@@ -23,6 +23,8 @@
  */
 package com.joelhockey.cirrus;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -39,6 +41,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.joelhockey.codec.Hex;
+import com.joelhockey.codec.JSON;
 
 public class DB {
     private static final Log log = LogFactory.getLog(DB.class);
@@ -113,8 +116,9 @@ public class DB {
             return count;
         } finally {
             long end = System.currentTimeMillis();
-            log.debug(String.format("sql: %s : %s : %d : %05d : %s : %s : %d", sqlcmd, ok ? "ok" : "error", count, (end - start),
-                    sql, Arrays.toString(params), count));
+            log.debug(format("sql: %s : %s : %d : %05d : %s : %s : %d",
+                    sqlcmd, ok ? "ok" : "error", count, (end - start), sql,
+                    JSON.stringify(params), count));
             if (stmt != null) {
                 try {
                     stmt.close();
@@ -178,8 +182,8 @@ public class DB {
             return new StatementResultSet(stmt, rs);
         } finally {
             long end = System.currentTimeMillis();
-            log.debug(String.format("sql: select : %s : %05d : %s : %s", ok ? "ok" : "error", (end - start), sql, Arrays
-                    .toString(params)));
+            log.debug(format("sql: select : %s : %05d : %s : %s",
+                    ok ? "ok" : "error", (end - start), sql, JSON.stringify(params)));
         }
     }
 
@@ -206,12 +210,14 @@ public class DB {
         StatementResultSet stmtRs = select(dbconn, sql, params);
         try {
             if (!stmtRs.getResultSet().next()) {
-                throw new SQLException(String.format("No records found for sql: %s, %s", sql, Arrays.toString(params)));
+                throw new SQLException(format("No records found for sql: %s, %s",
+                        sql, JSON.stringify(params)));
             }
             int result = stmtRs.getResultSet().getInt(1);
             try {
                 if (stmtRs.getResultSet().next()) {
-                    log.warn(String.format("More than 1 object returned for sql: %s , %s", sql, Arrays.toString(params)));
+                    log.warn(format("More than 1 object returned for sql: %s , %s",
+                            sql, JSON.stringify(params)));
                 }
             } catch (Throwable t) {
             } // ignore
@@ -244,12 +250,14 @@ public class DB {
         StatementResultSet stmtRs = select(dbconn, sql, params);
         try {
             if (!stmtRs.getResultSet().next()) {
-                throw new SQLException(String.format("No records found for sql: %s, %s", sql, Arrays.toString(params)));
+                throw new SQLException(format("No records found for sql: %s, %s",
+                        sql, JSON.stringify(params)));
             }
             String result = stmtRs.getResultSet().getString(1);
             try {
                 if (stmtRs.getResultSet().next()) {
-                    log.warn(String.format("More than 1 object returned for sql: %s , %s", sql, Arrays.toString(params)));
+                    log.warn(format("More than 1 object returned for sql: %s , %s",
+                            sql, JSON.stringify(params)));
                 }
             } catch (Throwable t) {
             } // ignore
