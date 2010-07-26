@@ -9,9 +9,8 @@
     // ***** 
 
 
-    var ic = new javax.naming.InitialContext();
-    var DATASOURCE = ic.lookup("jdbc/deuce");
-    var DB = com.joelhockey.cirrus.DB;
+    // load cirrus
+    load("WEB-INF/app/cirrus.js");
     var dbconn = DATASOURCE.getConnection();
     try {
         var dbversion;
