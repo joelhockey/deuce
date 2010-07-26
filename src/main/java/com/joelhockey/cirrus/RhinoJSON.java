@@ -23,7 +23,7 @@
  */
 package com.joelhockey.cirrus;
 
-import org.mozilla.javascript.Scriptable;
+import com.joelhockey.codec.JSON;
 
 /**
  * JSON for use in js scripts.
@@ -31,16 +31,11 @@ import org.mozilla.javascript.Scriptable;
  */
 
 public class RhinoJSON {
-    private Scriptable scope;
-    public RhinoJSON(Scriptable scope) {
-        this.scope = scope;
+    public static String stringify(Object obj) {
+        return JSON.stringify(RhinoJava.rhino2java(obj));
     }
 
-    public String stringify(Object obj) {
-        return com.joelhockey.codec.JSON.stringify(RhinoJava.rhino2java(obj));
-    }
-
-    public Object parse(String json) {
-        return RhinoJava.java2rhino(scope, com.joelhockey.codec.JSON.parse(json));
+    public static Object parse(String json) {
+        return RhinoJava.java2rhino(JSON.parse(json));
     }
 }

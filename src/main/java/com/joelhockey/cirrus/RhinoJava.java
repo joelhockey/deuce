@@ -34,12 +34,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.IdFunctionCall;
+import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeJavaArray;
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+
+import com.joelhockey.codec.JSON;
 
 /**
  * Convert between Java String, List, Map and Rhino NativeString, NativeArray, NativeObject
@@ -49,41 +54,64 @@ import org.mozilla.javascript.ScriptableObject;
  */
 
 public class RhinoJava {
-    public static Object java2rhino(Scriptable scope, Object obj) {
+    // set prototype of all Rhino objects to 'PROTO'
+    // which implements JSON toString function
+    private static final NativeObject PROTO = new NativeObject();
+    private static class ToString implements IdFunctionCall {
+        public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            return JSON.stringify(rhino2java(thisObj));
+        }
+    }
+
+    static {
+        PROTO.put("toString", PROTO, new IdFunctionObject(new ToString(), "Function", 2, 0));
+    }
+
+    /**
+     * Convert Java (Map, List) to Rhino (Object, Array).
+     * @param obj java object.
+     * @return rhino object
+     */
+    public static Object java2rhino(Object obj) {
         if (obj instanceof String) {
             return obj;
         } else if (obj instanceof Map) {
-            return java2rhinoMap(scope, (Map) obj);
+            return java2rhinoMap((Map) obj);
         } else if (obj instanceof List) {
-            return java2rhinoArray(scope, (List) obj);
+            return java2rhinoArray((List) obj);
         } else if (obj instanceof byte[] || obj instanceof char[] ||  obj instanceof short[] || obj instanceof int[] || obj instanceof long[]) {
             return new NativeJavaArray(null, obj);
         } else if (obj instanceof Object[]) {
-            return java2rhinoArray(scope, Arrays.asList(obj));
+            return java2rhinoArray(Arrays.asList(obj));
         }
         return obj;
     }
 
-    public static NativeObject java2rhinoMap(Scriptable scope, Map map) {
+    public static NativeObject java2rhinoMap(Map map) {
         NativeObject no = new NativeObject();
-        if (scope != null) {
-            no.setPrototype(ScriptableObject.getObjectPrototype(scope));
-        }
+        no.setPrototype(PROTO);
         for (Iterator it = map.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry) it.next();
-            no.defineProperty(entry.getKey().toString(), java2rhino(scope, entry.getValue()), ScriptableObject.EMPTY);
+            no.defineProperty(entry.getKey().toString(), java2rhino( entry.getValue()), ScriptableObject.EMPTY);
         }
         return no;
     }
 
-    public static NativeArray java2rhinoArray(Scriptable scope, List list) {
+    public static NativeArray java2rhinoArray(List list) {
         NativeArray na = new NativeArray(list.size());
+        na.setPrototype(PROTO);
         for (int i = 0; i < list.size(); i++) {
-            na.put(i, na, java2rhino(scope, list.get(i)));
+            na.put(i, na, java2rhino(list.get(i)));
         }
         return na;
     }
 
+    /**
+     * Convert Rhino (Object, Array) to Java (Map, List), or unwrap
+     * NativeJavaObjects.
+     * @param obj rhino object
+     * @return java object
+     */
     public static Object rhino2java(final Object obj) {
         if (obj instanceof NativeArray) {
             return rhino2javaNativeArray((NativeArray) obj);

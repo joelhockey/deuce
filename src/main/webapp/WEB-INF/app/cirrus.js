@@ -26,8 +26,10 @@
 var CONTROLLERS = {};
 var DATASOURCE = new javax.naming.InitialContext().lookup("jdbc/deuce");
 var DB = com.joelhockey.cirrus.DB;
-var JSON = new com.joelhockey.cirrus.RhinoJSON(global());
+var JSON = com.joelhockey.cirrus.RhinoJSON;
 var LIB = {};
+var log = org.apache.commons.logging.LogFactory.getLog("com.joelhockey.cirrus.js");
+
 
 // variables already injected into global namespace by CirrusServlet:
 // * params - NativeObject with params

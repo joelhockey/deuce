@@ -63,7 +63,6 @@ import org.mozilla.javascript.tools.shell.Global;
 public class CirrusScope extends ImporterTopLevel {
     private static final long serialVersionUID = 0xDC7C4EC5275394BL;
     private static final Log log = LogFactory.getLog(CirrusScope.class);
-	private static final Log jslog = LogFactory.getLog("com.joelhockey.cirrus.js");
     public static final long RELOAD_WAIT = 3000;
     private ServletConfig sconf;
     private Map<String, CacheEntry> fileCache = new HashMap<String, CacheEntry>();
@@ -90,7 +89,6 @@ public class CirrusScope extends ImporterTopLevel {
             "readFile",
         };
         defineFunctionProperties(names, CirrusScope.class, ScriptableObject.DONTENUM);
-        put("log", this, Context.javaToJS(jslog, this));
         put("sconf", this, Context.javaToJS(sconf, this));
     }
 
