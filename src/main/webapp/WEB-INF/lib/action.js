@@ -33,14 +33,14 @@ LIB.action = {
             if (count === 0) {
                 return {msgtype: "error", error: "session already started for id: " + id};
             }
+            var apdus = new com.joelhockey.globalplatform.Messages().initializeUpdate(0, hostChallenge);
+            return {msgtype: "actions", actions: [{id: "gp_initupdate", apdus: apdus}]}
         } catch (e) {
             log.error("Error in startActions", e.javaException || e.rhinoException || null);
             return {msgtype: "error", error: "could not start actions: " + e};
         } finally {
             dbconn.close();
         }
-        var apdus = com.joelhockey.globalplatform.Messages.initializeUpdate(0, hostChallenge);
-        return {msgtype: "actions", actions: [{id: "gp_initupdate", apdus: apdus}]}
     },
     
     // get next actions to send
