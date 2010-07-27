@@ -30,7 +30,7 @@ server.addHandler(requestLogHandler);
 
 // jndi datasource
 var ds = new org.hsqldb.jdbc.jdbcDataSource();
-ds.setDatabase("jdbc:hsqldb:./hsqldb/deuce");
+ds.setDatabase("jdbc:hsqldb:file:hsqldb/deuce;shutdown=true");
 ds.setUser("sa");
 var resource = new org.mortbay.jetty.plus.naming.Resource("jdbc/deuce", ds);
 

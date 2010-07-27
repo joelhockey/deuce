@@ -35,7 +35,7 @@ LIB.action = {
                 return { msgtype: "error", error: "session already started for id: " + id };
             }
             var apdus = new com.joelhockey.globalplatform.Messages().initializeUpdate(0, hostChallenge);
-            return { msgtype: "actions", actions: [{ id: "gp_initupdate", apdus: apdus }] }
+            return { msgtype: "actions", actions: [{ id: "gp_initupdate", name: "gp_initupdate", apdus: apdus }] }
         } catch (e) {
             log.error("Error in startActions", e.javaException || e.rhinoException || null);
             return { msgtype: "error", error: "could not start actions: " + e};
@@ -65,7 +65,7 @@ LIB.action = {
             // special handling for 'gp_extauth' response
         	var result = results.results[0];
             if (result.id === "gp_extauth") {
-            	results.results.splice(0, 1); // remove from results
+            	results.results.shift(); // remove from results
         		var nextStatus;
         		if (result.apdus && result.apdus.length === 1 && result.apdus[0] === "9000") {
         			nextStatus = "03_established";
@@ -117,15 +117,14 @@ where session_id=? and status='02_initupdate'",
             
             // if gp status is '02_initupdate', then complete with extauth
             if (status === "02_initupdate") {
-            	result = results.results[0];
-            	results.results.splice(0, 1); // remove from results
                 // check results contains only single gp_initupdate
             	if (results.results.length !== 1 || results.results[0].id !== "gp_initupdate" || !results.results[0].apdus || results.results[0].apdus.length !== 1) {
                     return { msgtype: "error", error: "expected gp_initupdate result with single apdu, got: " + JSON.stringify(results)};
             	}
-            	var initupdateres = results.results[0].apdus[0];
+                result = results.results.shift(); // remove from results
+            	var initupdateres = result.apdus[0];
             	var apdus = gp.externalAuthenticate(false, true, Hex.s2b(hostChallenge), Hex.s2b(initupdateres)); 
-            	nextActions.actions.push({ id: "gp_extauth", apdus: apdus });
+            	nextActions.actions.push({ id: "gp_extauth", name: "gp_extauth", apdus: apdus });
                 DB.update(dbconn,
 "update gp_session set \
   last_accessed_at=?,\
@@ -167,23 +166,21 @@ where session_id=? and status='02_initupdate'", [
             // handle results
             for (var i = 0; i < results.results.length; i++) {
             	result = results.results[0];
-          		var name = DB.selectStr(dbconn, "select name from action where id=? and status='02_executing'", [result.id])
-          		var name = String(rs.getString("name"));
+            	var actionid = result.id;
+          		var name = String(DB.selectStr(dbconn, "select name from action where id=? and status='02_executing'", [actionid]))
           		switch (name) {
-          		case /^gp_/:
-          			// ignore gp_* actions here
-          			continue;
           		case "getstatus":
           			gp.parseStatus(new com.joelhockey.smartcard.APDURes(result.apdus[0]),
           					new com.joelhockey.smartcard.APDURes(result.apdus[1]),
           					new com.joelhockey.smartcard.APDURes(result.apdus[2]));
+          			break;
           		default:
           			log.warn("unrecognised action name for response: " + name);
           			continue;
           		}
-          		var count = DB.update("update action set status='03_complete' where id=? and status='02_executing'");
+          		var count = DB.update(dbconn, "update action set status='03_complete' where id=? and status='02_executing'", [actionid]);
           		if (count !== 1) {
-          			log.warn("Did not update results for action: " + id + " : " + name + ", must have been race condition");
+          			log.warn("Did not update results for action: " + actionid + " : " + name + ", must have been race condition");
           		}
             }
             
@@ -209,16 +206,23 @@ order by id",
                 			apdus.push(apdulist.get(j));
                 		}
                 	}
-                    nextActions.actions.push({ id: actionid, apdus: apdus });
+                    nextActions.actions.push({ id: actionid, name: name, apdus: apdus });
                     break;
                 default:
                     log.error("unknown action name for request: [" + name + "]");
                     break;
                 }
-                DB.update(dbconn, "update action set status='02_executing' where id=?", [actionid]);
+                var count = DB.update(dbconn, "update action set status='02_executing' where id=? and status='01_ready'", [actionid]);
+                if (count !== 1) {
+                    log.warn("Did not update request for action: " + actionid + " : " + name + ", must have been race condition");
+                }
             }
             
             stmtRs.close();
+            if (nextActions.actions.length === 0) {
+                log.debug("all actions complete for session: " + id);
+                nextActions.msgtype = "done";
+            }
             return nextActions;
         } finally {
             dbconn.close();

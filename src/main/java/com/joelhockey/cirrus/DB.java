@@ -152,6 +152,18 @@ public class DB {
     }
 
     /**
+     * delete without using javascript 'delete' keyword.
+     * @param dbconn db connection
+     * @param sql sql delete statement with '?' for params
+     * @param params params
+     * @return number of records deleted
+     * @throws SQLException if sql error
+     */
+    public static int dl33t(Connection dbconn, String sql, Object... params) throws SQLException {
+        return delete(dbconn, sql, params);
+    }
+
+    /**
      * select. Caller MUST close statement.
      * @param dbconn db connection
      * @param sql sql select statement

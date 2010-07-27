@@ -97,6 +97,11 @@
       <artifactId>globalplatform</artifactId>
       <version>1.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.joelhockey</groupId>
+      <artifactId>jacknji11</artifactId>
+      <version>1.0</version>
+    </dependency>
 
     <!-- provided -->
     <dependency>

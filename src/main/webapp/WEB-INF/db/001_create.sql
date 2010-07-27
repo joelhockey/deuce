@@ -16,8 +16,6 @@ create table action (
 );
 alter table action add constraint chk_action_status check (status in ('01_ready', '02_executing', '03_complete', '04_timeout'));
 
-insert into action(iin, cin, csn, aid, name, status) values ('0001020304050607', '08090a0b0c0d0e0f', '4082018512930185', 'A000000018434D00', 'getstatus', '01_ready');
-
 create table gp_session (
     session_id varchar(255) not null,
     created_at timestamp default current_timestamp,
