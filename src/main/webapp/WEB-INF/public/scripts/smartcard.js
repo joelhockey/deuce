@@ -11,27 +11,36 @@ function apdu(termName) {
 
     var data = {csn: csn, iin: iin, cin: cin, terminal: termName};
     
-    $.getJSON('/apdu', data, function(msg) {
-        if (msg.msgtype !== "actions") {
-            done = true;
-            return;
-        }
-        var actions = msg.actions;
-        var results = [];
-        for (var i = 0; i < actions.length; i++) {
-            var action = actions[i];
-            var result = { id: action.id, name: action.name, apdus: [] };
-            results.push(result);
-            for (var j = 0; j < action.apdus.length; j++) {
-                alert('apdu > ' + action.id + ':' + action.name + ':' + action.apdus[i]);
-                var apdures = sc.transmith(action.apdus[i]);
-                alert('apdu < ' + apdures);
-                result.apdus.push(apdures);
+    
+    $.ajax({
+        url: "/apdu",
+        type: "POST",
+        dataType: "json",
+        data: JSON.stringify(data),
+        processData: false,
+        contentType: "application/json",
+        success: function(msg) {
+            if (msg.msgtype !== "actions") {
+                done = true;
+                return;
             }
+            var actions = msg.actions;
+            var results = [];
+            for (var i = 0; i < actions.length; i++) {
+                var action = actions[i];
+                var result = { id: action.id, name: action.name, apdus: [] };
+                results.push(result);
+                for (var j = 0; j < action.apdus.length; j++) {
+                    alert('apdu > ' + action.id + ':' + action.name + ':' + action.apdus[i]);
+                    var apdures = sc.transmith(action.apdus[i]);
+                    alert('apdu < ' + apdures);
+                    result.apdus.push(apdures);
+                }
+            }
+            data.msgtype = "results";
+            data.results = results;
+            delete data.actions;
         }
-        data.msgtype = "results";
-        data.results = results;
-        delete data.actions;
     });
     alert('done');
 }

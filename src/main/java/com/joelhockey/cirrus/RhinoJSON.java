@@ -23,6 +23,8 @@
  */
 package com.joelhockey.cirrus;
 
+import java.io.InputStream;
+
 import com.joelhockey.codec.JSON;
 
 /**
@@ -37,5 +39,9 @@ public class RhinoJSON {
 
     public static Object parse(String json) {
         return RhinoJava.java2rhino(null, JSON.parse(json));
+    }
+
+    public static Object parse(InputStream ins) {
+        return RhinoJava.java2rhino(null, JSON.parse(ins));
     }
 }
