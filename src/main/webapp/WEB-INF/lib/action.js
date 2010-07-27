@@ -62,6 +62,23 @@ LIB.action = {
                 return { msgtype: "error", error: "No gp session for " + id};
             }
             
+            // special handling for 'gp_extauth' response
+        	var result = results.results[0];
+            if (result.id === "gp_extauth") {
+            	results.results.splice(0, 1); // remove from results
+        		var nextStatus;
+        		if (result.apdus && result.apdus.length === 1 && result.apdus[0] === "9000") {
+        			nextStatus = "03_established";
+        		} else {
+            		nextStatus = "04_error";
+            		log.warn("Error doing SCP02: " + JSON.stringify(result));
+        		}
+        		DB.update(dbconn,
+"update gp_session set last_accessed_at=?, status=? \
+where session_id=? and status='02_initupdate'",
+[new java.util.Date(), nextStatus, id]);
+            }
+            
             // create P11Crypto object if needed
             var p11crypto = null;
             var csn = rs.getString("csn");
@@ -73,16 +90,16 @@ LIB.action = {
                     break;
                 case "03_established":
                     p11crypto = new com.joelhockey.globalplatform.P11Crypto(
-                        rs.getInteger("seq_counter"),
+                        rs.getInt("seq_counter"),
                         Hex.s2b(rs.getString("mac_iv")),
-                        rs.getInteger("p11_session_id"),
-                        rs.getInteger("p11_static_enc"),
-                        rs.getInteger("p11_static_mac"),
-                        rs.getInteger("p11_static_dek"),
-                        rs.getInteger("p11_session_cmac_des1"),
-                        rs.getInteger("p11_session_cmac_des3"),
-                        rs.getInteger("p11_session_senc"),
-                        rs.getInteger("p11_session_dek"));
+                        rs.getInt("p11_session_id"),
+                        rs.getInt("p11_static_enc"),
+                        rs.getInt("p11_static_mac"),
+                        rs.getInt("p11_static_dek"),
+                        rs.getInt("p11_session_cmac_des1"),
+                        rs.getInt("p11_session_cmac_des3"),
+                        rs.getInt("p11_session_senc"),
+                        rs.getInt("p11_session_dek"));
                     break;
                 default:
                     // nothing
@@ -100,7 +117,9 @@ LIB.action = {
             
             // if gp status is '02_initupdate', then complete with extauth
             if (status === "02_initupdate") {
-                // TODO: check results contains only single gp_initupdate
+            	result = results.results[0];
+            	results.results.splice(0, 1); // remove from results
+                // check results contains only single gp_initupdate
             	if (results.results.length !== 1 || results.results[0].id !== "gp_initupdate" || !results.results[0].apdus || results.results[0].apdus.length !== 1) {
                     return { msgtype: "error", error: "expected gp_initupdate result with single apdu, got: " + JSON.stringify(results)};
             	}
@@ -124,7 +143,7 @@ LIB.action = {
   p11_session_cmac_des3=?,\
   p11_session_senc=?,\
   p11_session_dek=? \
-where session_id=? and status='02_init_update'", [
+where session_id=? and status='02_initupdate'", [
     java.util.Date(),
     gp.useEncrypt,
     gp.useMAC,
@@ -145,7 +164,28 @@ where session_id=? and status='02_init_update'", [
                 DB.update(dbconn, "update gp_session set last_accessed_at=? where session_id=?", [java.util.Date(), id]);
             }
             
-            // TODO: handle results
+            // handle results
+            for (var i = 0; i < results.results.length; i++) {
+            	result = results.results[0];
+          		var name = DB.selectStr(dbconn, "select name from action where id=? and status='02_executing'", [result.id])
+          		var name = String(rs.getString("name"));
+          		switch (name) {
+          		case /^gp_/:
+          			// ignore gp_* actions here
+          			continue;
+          		case "getstatus":
+          			gp.parseStatus(new com.joelhockey.smartcard.APDURes(result.apdus[0]),
+          					new com.joelhockey.smartcard.APDURes(result.apdus[1]),
+          					new com.joelhockey.smartcard.APDURes(result.apdus[2]));
+          		default:
+          			log.warn("unrecognised action name for response: " + name);
+          			continue;
+          		}
+          		var count = DB.update("update action set status='03_complete' where id=? and status='02_executing'");
+          		if (count !== 1) {
+          			log.warn("Did not update results for action: " + id + " : " + name + ", must have been race condition");
+          		}
+            }
             
             stmtRs = DB.select(dbconn,
 "select id, version, aid, name, status \
@@ -156,6 +196,7 @@ order by id",
             rs = stmtRs.getResultSet();
             while (rs.next()) {
                 // add to result, update status
+            	var actionid = rs.getInt("id");
                 var name = String(rs.getString("name"));
                 switch (name) { // need to convert java string to js
                 case "getstatus":
@@ -168,12 +209,13 @@ order by id",
                 			apdus.push(apdulist.get(j));
                 		}
                 	}
-                    nextActions.actions.push({ id: rs.getString("id"), apdus: apdus });
+                    nextActions.actions.push({ id: actionid, apdus: apdus });
                     break;
                 default:
-                    log.error("unknown action name: [" + name + "]");
+                    log.error("unknown action name for request: [" + name + "]");
                     break;
                 }
+                DB.update(dbconn, "update action set status='02_executing' where id=?", [actionid]);
             }
             
             stmtRs.close();
