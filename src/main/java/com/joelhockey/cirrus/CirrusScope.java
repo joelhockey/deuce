@@ -226,9 +226,11 @@ public class CirrusScope extends ImporterTopLevel {
      * @return printf result
      */
     public static String printf(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Object[] formatArgs = new Object[args.length - 1];
-        System.arraycopy(args, 1, formatArgs, 0, formatArgs.length);
-        return String.format(args[0].toString(), formatArgs);
+        String fstr = (String) args[0];
+        fstr = fstr.replace("%d", "%.0f"); // all numbers will be doubles, so convert here
+        Object[] fargs = new Object[args.length - 1];
+        System.arraycopy(args, 1, fargs, 0, fargs.length);
+        return String.format(fstr, fargs);
     }
 
     private NativeObject loadjst(String name) throws IOException {

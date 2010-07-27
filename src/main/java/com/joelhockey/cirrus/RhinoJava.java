@@ -47,12 +47,11 @@ import org.mozilla.javascript.ScriptableObject;
 import com.joelhockey.codec.JSON;
 
 /**
- * Convert between Java String, List, Map and Rhino NativeString, NativeArray, NativeObject
+ * Convert between Java List, Map and Rhino NativeArray, NativeObject
  *
  * @author http://weblog.raganwald.com/2007/07/javascript-on-jvm-in-fifteen-minutes.html
  * @author Joel Hockey
  */
-
 public class RhinoJava {
     // set prototype of all Rhino objects to 'PROTO'
     // which implements JSON toString function
@@ -70,38 +69,39 @@ public class RhinoJava {
     /**
      * Convert Java (Map, List) to Rhino (Object, Array).
      * @param obj java object.
+     * @param scope optional scope - required for NativeJavaArray
      * @return rhino object
      */
-    public static Object java2rhino(Object obj) {
+    public static Object java2rhino(Scriptable scope, Object obj) {
         if (obj instanceof String) {
             return obj;
         } else if (obj instanceof Map) {
-            return java2rhinoMap((Map) obj);
+            return java2rhinoMap(scope, (Map) obj);
         } else if (obj instanceof List) {
-            return java2rhinoArray((List) obj);
+            return java2rhinoArray(scope, (List) obj);
         } else if (obj instanceof byte[] || obj instanceof char[] ||  obj instanceof short[] || obj instanceof int[] || obj instanceof long[]) {
-            return new NativeJavaArray(null, obj);
+            return new NativeJavaArray(scope, obj);
         } else if (obj instanceof Object[]) {
-            return java2rhinoArray(Arrays.asList(obj));
+            return java2rhinoArray(scope, Arrays.asList(obj));
         }
         return obj;
     }
 
-    public static NativeObject java2rhinoMap(Map map) {
+    public static NativeObject java2rhinoMap(Scriptable scope, Map map) {
         NativeObject no = new NativeObject();
         no.setPrototype(PROTO);
         for (Iterator it = map.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry) it.next();
-            no.defineProperty(entry.getKey().toString(), java2rhino( entry.getValue()), ScriptableObject.EMPTY);
+            no.defineProperty(entry.getKey().toString(), java2rhino(scope, entry.getValue()), ScriptableObject.EMPTY);
         }
         return no;
     }
 
-    public static NativeArray java2rhinoArray(List list) {
+    public static NativeArray java2rhinoArray(Scriptable scope, List list) {
         NativeArray na = new NativeArray(list.size());
         na.setPrototype(PROTO);
         for (int i = 0; i < list.size(); i++) {
-            na.put(i, na, java2rhino(list.get(i)));
+            na.put(i, na, java2rhino(scope, list.get(i)));
         }
         return na;
     }

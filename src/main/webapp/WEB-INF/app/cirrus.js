@@ -29,6 +29,9 @@ var DB = com.joelhockey.cirrus.DB;
 var JSON = com.joelhockey.cirrus.RhinoJSON;
 var LIB = {};
 var log = org.apache.commons.logging.LogFactory.getLog("com.joelhockey.cirrus.js");
+var java2rhino = function(o) {
+	return com.joelhockey.cirrus.RhinoJava.java2rhino(global(), o);
+}
 
 
 // variables already injected into global namespace by CirrusServlet:

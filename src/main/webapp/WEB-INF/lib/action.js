@@ -8,7 +8,7 @@ LIB.action = {
         case "results":
             return this.getNextActions(id, data);
         default:
-            return {msgtype: "error", error: "unknown msgtype: [" + data.msgtype + "]"};
+            return { msgtype: "error", error: "unknown msgtype: [" + data.msgtype + "]" };
         }
     },
     
@@ -16,9 +16,9 @@ LIB.action = {
     startActions: function (id, data) {
         // ensure iin, cin, csn included
         if (!data.iin || !data.cin || !data.csn) {
-            return {msgtype: "error", error: 
+            return { msgtype: "error", error: 
                 printf("Invalid start request, require iin, cin, csn.  Got iin=%s, cin=%s, csn=%s",
-                       data.iin, data.cin, data.csn)};
+                       data.iin, data.cin, data.csn) };
         }
         var dbconn = DATASOURCE.getConnection();
         try {
@@ -31,13 +31,13 @@ LIB.action = {
   )",
                     [id, new java.util.Date(), data.iin, data.cin, data.csn, hostChallenge, id]);
             if (count === 0) {
-                return {msgtype: "error", error: "session already started for id: " + id};
+                return { msgtype: "error", error: "session already started for id: " + id };
             }
             var apdus = new com.joelhockey.globalplatform.Messages().initializeUpdate(0, hostChallenge);
-            return {msgtype: "actions", actions: [{id: "gp_initupdate", apdus: apdus}]}
+            return { msgtype: "actions", actions: [{ id: "gp_initupdate", apdus: apdus }] }
         } catch (e) {
             log.error("Error in startActions", e.javaException || e.rhinoException || null);
-            return {msgtype: "error", error: "could not start actions: " + e};
+            return { msgtype: "error", error: "could not start actions: " + e};
         } finally {
             dbconn.close();
         }
@@ -54,7 +54,7 @@ LIB.action = {
             var rs = stmtRs.getResultSet();
             if (!rs.next()) {
                 log.warn("no session for " + id);
-                return {msgtype: "error", error: "No gp session for " + id};
+                return { msgtype: "error", error: "No gp session for " + id};
             }
             
             // create P11Crypto object if needed
@@ -86,13 +86,13 @@ LIB.action = {
             var enc = rs.getBoolean("enc");
             var mac = rs.getBoolean("mac");
             stmtRs.close();
-            var gp = com.joelhockey.globalplatform.Messages(p11crypto, enc, mac);
+            var gp = new com.joelhockey.globalplatform.Messages(p11crypto, enc, mac);
             
             // update last_accessed_at
             DB.update(dbconn, "update gp_session set last_accessed_at=? where session_id=?", [java.util.Date(), id]);
             
             // result holds all apdus
-            var result = {msgtype: "actions", actions: []};
+            var result = { msgtype: "actions", actions: [] };
             
             // if gp status is '02_initupdate', then complete with extauth
             if (status === "02_initupdate") {
@@ -120,13 +120,13 @@ LIB.action = {
                     log.error("unknown action name: " + name);
                     break;
                 }
-                DB.update();
+                //DB.update();
             }
             
             stmtRs.close();
             return result;
         } finally {
-            conn.close();
+            dbconn.close();
         }
         
     }

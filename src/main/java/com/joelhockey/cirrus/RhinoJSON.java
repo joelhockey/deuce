@@ -36,6 +36,6 @@ public class RhinoJSON {
     }
 
     public static Object parse(String json) {
-        return RhinoJava.java2rhino(JSON.parse(json));
+        return RhinoJava.java2rhino(null, JSON.parse(json));
     }
 }
