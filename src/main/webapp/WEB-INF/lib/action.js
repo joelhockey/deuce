@@ -1,3 +1,5 @@
+// initialize cryptoki
+com.joelhockey.jacknji11.C.Initialize();
 
 LIB.action = {
     // switch between start and results
@@ -22,14 +24,13 @@ LIB.action = {
         }
         var dbconn = DATASOURCE.getConnection();
         try {
-            var hostChallenge = com.joelhockey.codec.Buf.substring(null, 0, 8);
-            new java.security.SecureRandom().nextBytes(hostChallenge);
+            var hostChallenge = com.joelhockey.codec.Buf.random(8);
             var count = DB.insert(dbconn,
 "insert into gp_session (session_id, last_accessed_at, iin, cin, csn, status, host_challenge) \
   ( select ?, ?, ?, ?, ?, '02_initupdate', ? from dual where not exists \
     ( select null from gp_session where session_id=? ) \
   )",
-                    [id, new java.util.Date(), data.iin, data.cin, data.csn, hostChallenge, id]);
+[id, new java.util.Date(), data.iin, data.cin, data.csn, hostChallenge, id]);
             if (count === 0) {
                 return { msgtype: "error", error: "session already started for id: " + id };
             }
@@ -45,6 +46,10 @@ LIB.action = {
     
     // get next actions to send
     getNextActions: function (id, results) {
+    	if (!results || results.msgtype !== "results" || !results.results || results.results.length <= 0) {
+            return { msgtype: "error", error: "expected msgtype=results, got: " + JSON.stringify(results)};
+    	}
+    	
         // get gp session details from DB, ensure scp02 started
         // once gp session is running, send actions
         var dbconn = DATASOURCE.getConnection();
@@ -60,10 +65,11 @@ LIB.action = {
             // create P11Crypto object if needed
             var p11crypto = null;
             var csn = rs.getString("csn");
-            var status = rs.getString("status");
-            switch (status) {
+            var status = String(rs.getString("status"));
+            log.debug("gp status for session " + id + ": " + status);
+            switch (status) { // need to convert java string to js
                 case "02_initupdate":
-                    p11crypto = new com.joelhockey.globalplatform.P11Crypto("GP", null, "password", "isk");
+                    p11crypto = new com.joelhockey.globalplatform.P11Crypto("GP", "password", "isk");
                     break;
                 case "03_established":
                     p11crypto = new com.joelhockey.globalplatform.P11Crypto(
@@ -85,46 +91,93 @@ LIB.action = {
             // create GP Messages
             var enc = rs.getBoolean("enc");
             var mac = rs.getBoolean("mac");
+            var hostChallenge = rs.getString("host_challenge");
             stmtRs.close();
             var gp = new com.joelhockey.globalplatform.Messages(p11crypto, enc, mac);
             
-            // update last_accessed_at
-            DB.update(dbconn, "update gp_session set last_accessed_at=? where session_id=?", [java.util.Date(), id]);
-            
-            // result holds all apdus
-            var result = { msgtype: "actions", actions: [] };
+            // nextActions to return
+            var nextActions = { msgtype: "actions", actions: [] };
             
             // if gp status is '02_initupdate', then complete with extauth
             if (status === "02_initupdate") {
                 // TODO: check results contains only single gp_initupdate
-                result.actions.push({id: "gp_extauth", apdus: gp.externalAuthenticate(false, true, Hex.s2b(rs.getString("host_challenge")))});
-                DB.update(dbconn, "update gp_session set last_accessed_at=?, status='03_established', enc=?, mac=?, seq_counter=?, mac_iv=?, p11_slot_id=?, p11_session_id=?, p11_static_enc=?, p11_static_mac=?, p11_static_dek=?, p11_session_cmac_des1=?, p11_session_cmac_des3=?, p11_session_senc=?, p11_session_dek=? where session_id=? and status='02_init_update'",
-                    [java.util.Date(), gp.useEncrypt(), gp.useMAC(), p11crypto.getSeqCounter(), p11crypto.getMacIV(), p11crypto.getSlotID(), p11crypto.getSession(), p11crypto.getStaticENC(), p11crypto.getStaticMAC(), p11crypto.getStaticDEK(), p11crypto.getSessionCMACdes1(), p11crypto.getSessionCMACdes3(), p11crypto.getSessionSENC(), p11crypto.getSessionDEK(), id]);
+            	if (results.results.length !== 1 || results.results[0].id !== "gp_initupdate" || !results.results[0].apdus || results.results[0].apdus.length !== 1) {
+                    return { msgtype: "error", error: "expected gp_initupdate result with single apdu, got: " + JSON.stringify(results)};
+            	}
+            	var initupdateres = results.results[0].apdus[0];
+            	var apdus = gp.externalAuthenticate(false, true, Hex.s2b(hostChallenge), Hex.s2b(initupdateres)); 
+            	nextActions.actions.push({ id: "gp_extauth", apdus: apdus });
+                DB.update(dbconn,
+"update gp_session set \
+  last_accessed_at=?,\
+  status='03_established',\
+  enc=?,\
+  mac=?,\
+  seq_counter=?,\
+  mac_iv=?,\
+  p11_slot_id=?,\
+  p11_session_id=?,\
+  p11_static_enc=?,\
+  p11_static_mac=?,\
+  p11_static_dek=?,\
+  p11_session_cmac_des1=?,\
+  p11_session_cmac_des3=?,\
+  p11_session_senc=?,\
+  p11_session_dek=? \
+where session_id=? and status='02_init_update'", [
+    java.util.Date(),
+    gp.useEncrypt,
+    gp.useMAC,
+    p11crypto.seqCounter,
+    p11crypto.macIV,
+    p11crypto.slotID,
+    p11crypto.session,
+    p11crypto.staticENC,
+    p11crypto.staticMAC,
+    p11crypto.staticDEK,
+    p11crypto.sessionCMACdes1,
+    p11crypto.sessionCMACdes3,
+    p11crypto.sessionSENC,
+    p11crypto.sessionDEK,
+    id
+]);
             } else {
                 DB.update(dbconn, "update gp_session set last_accessed_at=? where session_id=?", [java.util.Date(), id]);
             }
             
             // TODO: handle results
             
-            stmtRs = DB.select(dbconn, "select id, version, aid, name, status from action where csn=? and status='01_ready' order by id", [csn]);
+            stmtRs = DB.select(dbconn,
+"select id, version, aid, name, status \
+from action \
+where csn=? and status='01_ready' \
+order by id",
+[csn]);
             rs = stmtRs.getResultSet();
             while (rs.next()) {
                 // add to result, update status
-                var name = rs.getString("name");
-                switch (name) {
+                var name = String(rs.getString("name"));
+                switch (name) { // need to convert java string to js
                 case "getstatus":
-                    var apdus = gp.getStatus();
-                    result.actions.push({id: rs.getString("id"), apdus: gp.getstatus()});
+                	// flatten GET-STATUS apdus
+                	var apdus = []
+                    var getstatus = gp.getStatus();
+                	for (var i = 0; i < getstatus.size(); i++) {
+                		var apdulist = getstatus.get(i);
+                		for (var j = 0; j < apdulist.size(); j++) {
+                			apdus.push(apdulist.get(j));
+                		}
+                	}
+                    nextActions.actions.push({ id: rs.getString("id"), apdus: apdus });
                     break;
                 default:
-                    log.error("unknown action name: " + name);
+                    log.error("unknown action name: [" + name + "]");
                     break;
                 }
-                //DB.update();
             }
             
             stmtRs.close();
-            return result;
+            return nextActions;
         } finally {
             dbconn.close();
         }

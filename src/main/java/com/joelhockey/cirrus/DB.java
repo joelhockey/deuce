@@ -34,7 +34,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Arrays;
 import java.util.Date;
 
 import org.apache.commons.logging.Log;
@@ -116,9 +115,9 @@ public class DB {
             return count;
         } finally {
             long end = System.currentTimeMillis();
-            log.debug(format("sql: %s : %s : %d : %05d : %s : %s : %d",
+            log.debug(format("sql: %s : %s : %d : %05d : %s : %s",
                     sqlcmd, ok ? "ok" : "error", count, (end - start), sql,
-                    JSON.stringify(params), count));
+                    JSON.stringify(params)));
             if (stmt != null) {
                 try {
                     stmt.close();
@@ -292,6 +291,8 @@ public class DB {
                 stmt.setDouble(i + 1, (Double) p);
             } else if (p instanceof Date) {
                 stmt.setTimestamp(i + 1, new java.sql.Timestamp(((Date) p).getTime()));
+            } else if (p instanceof Boolean) {
+                stmt.setBoolean(i + 1, (Boolean) p);
             } else if (p instanceof byte[]) {
                 stmt.setString(i + 1, Hex.b2s((byte[]) p));
             } else if (p instanceof Throwable) {
