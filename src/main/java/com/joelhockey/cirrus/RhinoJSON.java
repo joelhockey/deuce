@@ -25,6 +25,8 @@ package com.joelhockey.cirrus;
 
 import java.io.InputStream;
 
+import org.mozilla.javascript.Scriptable;
+
 import com.joelhockey.codec.JSON;
 
 /**
@@ -33,15 +35,19 @@ import com.joelhockey.codec.JSON;
  */
 
 public class RhinoJSON {
-    public static String stringify(Object obj) {
+    private Scriptable scope;
+    public RhinoJSON(Scriptable scope) {
+        this.scope = scope;
+    }
+    public String stringify(Object obj) {
         return JSON.stringify(RhinoJava.rhino2java(obj));
     }
 
-    public static Object parse(String json) {
-        return RhinoJava.java2rhino(null, JSON.parse(json));
+    public Object parse(String json) {
+        return RhinoJava.java2rhino(scope, JSON.parse(json));
     }
 
-    public static Object parse(InputStream ins) {
-        return RhinoJava.java2rhino(null, JSON.parse(ins));
+    public Object parse(InputStream ins) {
+        return RhinoJava.java2rhino(scope, JSON.parse(ins));
     }
 }

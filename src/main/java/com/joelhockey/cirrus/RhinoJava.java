@@ -41,6 +41,7 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeJavaArray;
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -55,15 +56,10 @@ import com.joelhockey.codec.JSON;
 public class RhinoJava {
     // set prototype of all Rhino objects to 'PROTO'
     // which implements JSON toString function
-    private static final NativeObject PROTO = new NativeObject();
     private static class ToString implements IdFunctionCall {
         public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             return JSON.stringify(rhino2java(thisObj));
         }
-    }
-
-    static {
-        PROTO.put("toString", PROTO, new IdFunctionObject(new ToString(), "Function", 2, 0));
     }
 
     /**
@@ -89,7 +85,9 @@ public class RhinoJava {
 
     public static NativeObject java2rhinoMap(Scriptable scope, Map map) {
         NativeObject no = new NativeObject();
-        no.setPrototype(PROTO);
+        // set prototype, add json toString
+        ScriptRuntime.setObjectProtoAndParent(no, scope);
+        no.put("toString", no, new IdFunctionObject(new ToString(), "Function", 2, 0));
         for (Iterator it = map.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry) it.next();
             no.defineProperty(entry.getKey().toString(), java2rhino(scope, entry.getValue()), ScriptableObject.EMPTY);
@@ -99,7 +97,9 @@ public class RhinoJava {
 
     public static NativeArray java2rhinoArray(Scriptable scope, List list) {
         NativeArray na = new NativeArray(list.size());
-        na.setPrototype(PROTO);
+        // set prototype, add json toString
+        ScriptRuntime.setObjectProtoAndParent(na, scope);
+        na.put("toString", na, new IdFunctionObject(new ToString(), "Function", 2, 0));
         for (int i = 0; i < list.size(); i++) {
             na.put(i, na, java2rhino(scope, list.get(i)));
         }

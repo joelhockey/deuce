@@ -23,16 +23,15 @@
  */
 
 // GLOBAL objects
-var CONTROLLERS = {};
-var DATASOURCE = new javax.naming.InitialContext().lookup("jdbc/deuce");
+var Buf = com.joelhockey.codec.Buf;
+var Hex = com.joelhockey.codec.Hex;
 var DB = com.joelhockey.cirrus.DB;
-var JSON = com.joelhockey.cirrus.RhinoJSON;
-var LIB = {};
-var log = org.apache.commons.logging.LogFactory.getLog("com.joelhockey.cirrus.js");
-var java2rhino = function(o) {
-	return com.joelhockey.cirrus.RhinoJava.java2rhino(global(), o);
-}
 
+var CONTROLLERS = CONTROLLERS || {};
+var DATASOURCE = new javax.naming.InitialContext().lookup("jdbc/deuce");
+var JSON = new com.joelhockey.cirrus.RhinoJSON(global());
+var LIB = LIB || {};
+var log = org.apache.commons.logging.LogFactory.getLog("com.joelhockey.cirrus.js");
 
 // variables already injected into global namespace by CirrusServlet:
 // * params - NativeObject with params
@@ -71,7 +70,9 @@ function cirrus(req, res) {
                     }
                 }
             }
-        } catch (e) { /* ignore */ }
+        } catch (e) {
+        	log.warn("error loading controller: " + controller + ", " + e);
+        }
         return ctlr;
     };
 
@@ -95,7 +96,7 @@ function cirrus(req, res) {
         controller = "public";
     }
 
-    log.debug("controller: " + controller + ", action: " + action + ", path: " + path);
+    log.info(printf("controller/action: %s/%s, method/path: %s %s", controller, action, method, path));
     var ctlr = getController(controller);
     if (!ctlr) {
         log.warn("no controller defined for path: " + path);

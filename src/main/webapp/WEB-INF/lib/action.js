@@ -24,7 +24,7 @@ LIB.action = {
         }
         var dbconn = DATASOURCE.getConnection();
         try {
-            var hostChallenge = com.joelhockey.codec.Buf.random(8);
+            var hostChallenge = Buf.random(8);
             var count = DB.insert(dbconn,
 "insert into gp_session (session_id, last_accessed_at, iin, cin, csn, status, host_challenge) \
   ( select ?, ?, ?, ?, ?, '02_initupdate', ? from dual where not exists \
@@ -32,6 +32,7 @@ LIB.action = {
   )",
 [id, new java.util.Date(), data.iin, data.cin, data.csn, hostChallenge, id]);
             if (count === 0) {
+                log.warn("session already started for id: " + id);
                 return { msgtype: "error", error: "session already started for id: " + id };
             }
             var apdus = new com.joelhockey.globalplatform.Messages().initializeUpdate(0, hostChallenge);
@@ -123,7 +124,7 @@ where session_id=? and status='02_initupdate'",
             	}
                 result = results.results.shift(); // remove from results
             	var initupdateres = result.apdus[0];
-            	var apdus = gp.externalAuthenticate(false, true, Hex.s2b(hostChallenge), Hex.s2b(initupdateres)); 
+            	var apdus = gp.externalAuthenticate(false, true, com.joelhockey.codec.Hex.s2b(hostChallenge), com.joelhockey.codec.Hex.s2b(initupdateres)); 
             	nextActions.actions.push({ id: "gp_extauth", name: "gp_extauth", apdus: apdus });
                 DB.update(dbconn,
 "update gp_session set \
@@ -170,9 +171,13 @@ where session_id=? and status='02_initupdate'", [
           		var name = String(DB.selectStr(dbconn, "select name from action where id=? and status='02_executing'", [actionid]))
           		switch (name) {
           		case "getstatus":
-          			gp.parseStatus(new com.joelhockey.smartcard.APDURes(result.apdus[0]),
-          					new com.joelhockey.smartcard.APDURes(result.apdus[1]),
-          					new com.joelhockey.smartcard.APDURes(result.apdus[2]));
+          		    try {
+              			gp.parseStatus(new com.joelhockey.smartcard.APDURes(result.apdus[0]),
+              					new com.joelhockey.smartcard.APDURes(result.apdus[1]),
+              					new com.joelhockey.smartcard.APDURes(result.apdus[2]));
+          		    } catch (e) {
+          		        log.error("error parsing getstatus", e.javaException || e.rhinoException || null);
+          		    }
           			break;
           		default:
           			log.warn("unrecognised action name for response: " + name);
