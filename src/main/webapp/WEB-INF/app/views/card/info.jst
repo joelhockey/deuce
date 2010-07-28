@@ -1,6 +1,28 @@
 {prototype default}
 {function head}
 <script src="/scripts/smartcard.js"></script>
+<script>
+$(document).ready(function() {
+    var scard = document.getElementById('SmartcardApplet');
+    var terms = scard.terminals().list(scard.ALL);
+    for (var i = 0; i < terms.size(); i++) {
+        var term = terms.get(i);
+        var cplc = "&nbsp;";
+        if (term.isCardPresent()) {
+            try {
+                var sc = scard.getSmartcard(term);
+                cplc = sc.transmith('80ca9f7f00');
+                sc.disconnect(true);
+            } catch (e) {
+                cplc = e;
+            }
+        }
+        $('#terminalTable tr:last').after(
+            '<tr><td>' + term.getName() + '</td><td>' + term.isCardPresent() +
+            '</td><td>' + cplc + '</td><td><a href="" onclick="apdu(\\'' + term.getName() + '\\'); return false;">update</a></td></tr>');
+    }
+});
+</script>
 {/function head}
 {function body}
 <h3>card info</h3>
@@ -11,25 +33,5 @@
   archive="/applets/jspcsc-1.0-jar-with-dependencies.jar"
   width="0" height="0" name="SmartcardApplet" id="SmartcardApplet">
 </applet>
-<script>
-var scard = document.getElementById('SmartcardApplet');
-var terms = scard.terminals().list(scard.ALL);
-for (var i = 0; i < terms.size(); i++) {
-    var term = terms.get(i);
-    var cplc = '';
-    if (term.isCardPresent()) {
-        try {
-            var sc = scard.getSmartcard(term);
-            cplc = sc.transmith('80ca9f7f00');
-            sc.disconnect(true);
-        } catch (e) {
-            cplc = e;
-        }
-    }
-    $('#terminalTable tr:last').after(
-        '<tr><td>' + term.getName() + '</td><td>' + term.isCardPresent() +
-        '</td><td>' + cplc + '</td><td><a href="#" onclick="apdu(\\'' + term.getName() + '\\');">update</a></td></tr>');
-}
-</script>
 <img src="/images/tennis_ball.jpg" />
 {/function body}
