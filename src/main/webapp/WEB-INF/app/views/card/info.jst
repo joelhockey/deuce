@@ -3,7 +3,7 @@
 <script src="/scripts/smartcard.js"></script>
 <script>
 $(document).ready(function() {
-    var scard = document.getElementById('SmartcardApplet');
+    var scard = $("#SmartcardApplet")[0];
     var terms = scard.terminals().list(scard.ALL);
     for (var i = 0; i < terms.size(); i++) {
         var term = terms.get(i);
