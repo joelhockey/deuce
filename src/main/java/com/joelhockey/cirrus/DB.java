@@ -46,6 +46,7 @@ import com.joelhockey.codec.JSON;
 
 public class DB {
     private final Log log = LogFactory.getLog(DB.class);
+    private static final Object[] EMPTY = null;
     private DataSource dataSource;
     private Connection dbconn;
 
@@ -78,7 +79,7 @@ public class DB {
      * @throws SQLException
      */
     public void execute(String sql) throws SQLException {
-        update(sql, "execute", null);
+        update(sql, "execute", EMPTY);
     }
 
     /**
@@ -88,7 +89,7 @@ public class DB {
      * @throws SQLException if sql error
      */
     public int insert(String sql) throws SQLException {
-        return insert(sql, null);
+        return insert(sql, EMPTY);
     }
 
     /**
@@ -109,7 +110,7 @@ public class DB {
      * @throws SQLException if sql error
      */
     public int update(String sql) throws SQLException {
-        return update(sql, null);
+        return update(sql, EMPTY);
     }
 
     /**
@@ -166,7 +167,7 @@ public class DB {
      * @throws SQLException if sql error
      */
     public int delete(String sql) throws SQLException {
-        return delete(sql, null);
+        return delete(sql, EMPTY);
     }
 
     /**
@@ -187,7 +188,7 @@ public class DB {
      * @throws SQLException if sql error
      */
     public int dl33t(String sql) throws SQLException {
-        return delete(sql, null);
+        return delete(sql, EMPTY);
     }
 
     /**
@@ -208,7 +209,7 @@ public class DB {
      * @throws SQLException if sql error
      */
     public StatementResultSet select(String sql) throws SQLException {
-        return select(sql, null);
+        return select(sql, EMPTY);
     }
 
     /**
@@ -241,7 +242,7 @@ public class DB {
      * @throws SQLException if sql error
      */
     public int selectInt(String sql) throws SQLException {
-        return selectInt(sql, null);
+        return selectInt(sql, EMPTY);
     }
 
     /**
@@ -279,7 +280,7 @@ public class DB {
      * @throws SQLException if sql error
      */
     public String selectStr(String sql) throws SQLException {
-        return selectStr(sql, null);
+        return selectStr(sql, EMPTY);
     }
 
     /**

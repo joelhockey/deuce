@@ -1,7 +1,7 @@
-import com.joelhockey.jsunit.JSUnit;
+import com.joelhockey.jairusunit.JairusUnit;
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        JSUnit.main("-basedir . actiontest.js".split("\\s+"));
+        JairusUnit.main("-basedir . actiontest.js".split("\\s+"));
     }
 }
