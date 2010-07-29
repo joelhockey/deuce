@@ -17,8 +17,8 @@ $(document).ready(function() {
                 cplc = e;
             }
         }
-        $('#terminalTable tr:last').after(
-            '<tr><td>' + term.getName() + '</td><td>' + term.isCardPresent() +
+        $('#terminalTable tr:last')
+          .after('<tr><td>' + term.getName() + '</td><td>' + term.isCardPresent() +
             '</td><td>' + cplc + '</td><td><a href="" onclick="apdu(\\'' + term.getName() + '\\'); return false;">update</a></td></tr>');
     }
 });

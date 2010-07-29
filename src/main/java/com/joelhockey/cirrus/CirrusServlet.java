@@ -25,14 +25,17 @@ package com.joelhockey.cirrus;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.Enumeration;
 
+import javax.naming.InitialContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,17 +63,37 @@ public class CirrusServlet extends HttpServlet {
             }
         }
     };
+    private DataSource dataSource;
 
 
     /** Ensure DB is at correct version, if not run migrations.  */
     @Override
     public void init() throws ServletException {
+        // get datasource
+        try {
+            InitialContext ic = new InitialContext();
+            dataSource = (DataSource) ic.lookup("jdbc/deuce");
+            // test
+            Connection dbconn = dataSource.getConnection();
+            dbconn.close();
+        } catch (Exception e) {
+            log.error("Error getting dbconn", e);
+            throw new ServletException("Error getting dbconn", e);
+        }
+
+        DB db = null;
         try {
             CirrusScope scope = localScope.get();
+            db = new DB(dataSource);
+            scope.put("DB", scope, db);
             scope.load("/WEB-INF/db/migrate.js");
         } catch (Exception e) {
             log.error("Error migrating db", e);
             throw new ServletException("Error migrating db", e);
+        } finally {
+            if (db != null) {
+                db.close();
+            }
         }
     }
 
@@ -112,13 +135,19 @@ public class CirrusServlet extends HttpServlet {
             scope.put("req", scope, new NativeJavaObject(scope, req, HttpServletRequest.class));
             scope.put("res", scope, new NativeJavaObject(scope, res, HttpServletResponse.class));
 
-            Function cirrus = (Function) scope.get("cirrus", scope);
+            // set up DB
+            DB db = new DB(dataSource);
+            scope.put("DB", scope, db);
+
             Context cx = Context.enter();
             try {
+                Function cirrus = (Function) scope.get("cirrus", scope);
             	cx.setOptimizationLevel(9);
                 cirrus.call(cx, scope, scope, new Object[] {req, res});
             } finally {
                 Context.exit();
+                // close DB
+                db.close();
                 scope.delete("req");
                 scope.delete("res");
             }

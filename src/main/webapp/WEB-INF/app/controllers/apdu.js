@@ -1,9 +1,9 @@
-load("WEB-INF/lib/action.js");
+load("WEB-INF/app/models/action.js");
 
 CONTROLLERS.apdu = {
     post: function (req, res) {
         var data = JSON.parse(req.getInputStream());
-        var actions = LIB.action.getActions(req.getSession().getId(), data)
+        var actions = MODELS.action.getActions(req.session.id, data)
         res.setContentType("application/json");
         res.getWriter().write(JSON.stringify(actions));
     },

@@ -25,12 +25,11 @@
 // GLOBAL objects
 var Buf = com.joelhockey.codec.Buf;
 var Hex = com.joelhockey.codec.Hex;
-var DB = com.joelhockey.cirrus.DB;
 
 var CONTROLLERS = CONTROLLERS || {};
-var DATASOURCE = new javax.naming.InitialContext().lookup("jdbc/deuce");
 var JSON = new com.joelhockey.cirrus.RhinoJSON(global());
 var LIB = LIB || {};
+var MODELS = MODELS || {};
 var log = org.apache.commons.logging.LogFactory.getLog("com.joelhockey.cirrus.js");
 
 // variables already injected into global namespace by CirrusServlet:
